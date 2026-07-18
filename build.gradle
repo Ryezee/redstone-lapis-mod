@@ -106,6 +106,41 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
 }
 
+// --- Dev convenience: copy the freshly built jar into a Prism Launcher instance ---
+// The mods-folder path is machine-specific, so it is NOT hardcoded here (this file is
+// committed to a public repo). Set it in your GLOBAL, never-committed Gradle config
+// (~/.gradle/gradle.properties):
+//   prismModsDir=C:/Users/Ryan/AppData/Roaming/PrismLauncher/instances/1.21.1 Vanila ++/minecraft/mods
+// Then run:  ./gradlew deployToPrism
+tasks.register('deployToPrism', Copy) {
+    group = 'deployment'
+    description = 'Builds the mod jar and copies it into the Prism test instance mods folder.'
+
+    def modsDir = project.findProperty('prismModsDir')
+
+    // Skip cleanly (don't fail the build) if the path hasn't been configured on this machine.
+    onlyIf {
+        boolean configured = modsDir != null
+        if (!configured) {
+            logger.warn('deployToPrism: set prismModsDir in ~/.gradle/gradle.properties to enable this task.')
+        }
+        configured
+    }
+
+    from tasks.named('jar')                                       // depends on + takes the built mod jar
+    into modsDir ?: layout.buildDirectory.dir('libs')            // fallback keeps config valid when unset
+
+    // Remove older builds of THIS mod first so two versions can never load at once.
+    // Plain java.io.File is used (not Gradle's fileTree/delete) to stay configuration-cache safe.
+    doFirst {
+        if (modsDir != null) {
+            new File(modsDir.toString()).listFiles({ dir, name ->
+                name.startsWith('redstonelapismod-') && name.endsWith('.jar')
+            } as FilenameFilter)?.each { it.delete() }
+        }
+    }
+}
+
 // IDEA no longer automatically downloads sources/javadoc jars for dependencies.
 idea {
     module {
