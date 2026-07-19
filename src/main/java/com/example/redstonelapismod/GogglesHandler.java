@@ -35,21 +35,14 @@ public final class GogglesHandler {
         }
 
         ItemStack head = player.getItemBySlot(EquipmentSlot.HEAD);
-        boolean wearing = head.is(RedstoneLapisMod.REDSTONE_GOGGLES.get());
-        // Powered = wearing AND (battery socketed into the goggles has charge,
-        // OR — fallback — a loose battery in the inventory does).
-        int installed = GogglesItem.installedCharge(head);
-        boolean powered = wearing
-                && (installed >= DRAIN_PER_SECOND || BatteryItem.hasCharge(player, DRAIN_PER_SECOND));
+        // Powered = wearing AND (socketed battery first, loose inventory battery as fallback).
+        boolean powered = head.is(RedstoneLapisMod.REDSTONE_GOGGLES.get())
+                && PoweredHeadgearItem.isPowered(player, head, DRAIN_PER_SECOND);
 
         if (powered) {
             // Bill once a second, not every tick (20 ticks = 1 second).
             if (player.tickCount % 20 == 0) {
-                if (installed >= DRAIN_PER_SECOND) {
-                    head.set(RedstoneLapisMod.CHARGE.get(), installed - DRAIN_PER_SECOND);
-                } else {
-                    BatteryItem.tryDrain(player, DRAIN_PER_SECOND);
-                }
+                PoweredHeadgearItem.drainOnePowerTick(player, head, DRAIN_PER_SECOND);
             }
             // ambient=false, visible=false, showIcon=false -> no particles, no HUD icon.
             player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, EFFECT_DURATION, 0, false, false, false));

@@ -1,11 +1,13 @@
 package com.example.redstonelapismod.client;
 
 import com.example.redstonelapismod.BatteryItem;
-import com.example.redstonelapismod.GogglesItem;
+import com.example.redstonelapismod.PoweredHeadgearItem;
 import com.example.redstonelapismod.RedstoneLapisMod;
 
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Small client-side helpers shared by the goggles' visual features
@@ -27,14 +29,25 @@ public final class GogglesClient {
     /**
      * True when the goggles are worn AND powered — first by the battery socketed
      * into the goggles, falling back to any loose battery in the inventory.
-     * The client can check this locally because equipment and inventories (and the
-     * charge component on each stack) are synced from the server automatically.
      */
     public static boolean isPowered(Player player) {
-        if (!isWorn(player)) {
+        return isWearingPowered(player, RedstoneLapisMod.REDSTONE_GOGGLES.get());
+    }
+
+    /**
+     * Generic form for any powered headgear (goggles, headtorch, ...): worn in the
+     * head slot AND the socketed battery (first) or a loose inventory battery has
+     * charge. The client can check this locally because equipment and inventories
+     * (and the charge component on each stack) are synced from the server.
+     */
+    public static boolean isWearingPowered(Player player, Item item) {
+        if (player == null) {
             return false;
         }
-        return GogglesItem.installedCharge(player.getItemBySlot(EquipmentSlot.HEAD)) > 0
-                || BatteryItem.hasCharge(player, 1);
+        ItemStack head = player.getItemBySlot(EquipmentSlot.HEAD);
+        if (!head.is(item)) {
+            return false;
+        }
+        return PoweredHeadgearItem.installedCharge(head) > 0 || BatteryItem.hasCharge(player, 1);
     }
 }

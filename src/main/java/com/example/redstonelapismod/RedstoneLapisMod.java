@@ -4,12 +4,21 @@ import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
 
+import java.util.List;
+import java.util.Map;
+
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.ExtraCodecs;
+import net.minecraft.world.item.ArmorItem;
+import net.minecraft.world.item.ArmorMaterial;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -40,6 +49,35 @@ public class RedstoneLapisMod {
                     .persistent(ExtraCodecs.NON_NEGATIVE_INT)
                     .networkSynchronized(ByteBufCodecs.VAR_INT));
 
+    // Deferred register for armor materials (a registry since 1.20.5, like items/components).
+    public static final DeferredRegister<ArmorMaterial> ARMOR_MATERIALS =
+            DeferredRegister.create(Registries.ARMOR_MATERIAL, MODID);
+
+    // "goggles" armor material — zero protection; exists so the goggles render like a
+    // fitted helmet using textures/models/armor/goggles_layer_1.png.
+    public static final DeferredHolder<ArmorMaterial, ArmorMaterial> GOGGLES_ARMOR_MATERIAL =
+            ARMOR_MATERIALS.register("goggles", () -> new ArmorMaterial(
+                    Map.of(ArmorItem.Type.HELMET, 0),          // defense points: none
+                    9,                                          // enchantability (leather-ish)
+                    SoundEvents.ARMOR_EQUIP_LEATHER,            // equip sound
+                    () -> Ingredient.of(Items.REDSTONE),        // anvil repair ingredient
+                    List.of(new ArmorMaterial.Layer(
+                            ResourceLocation.fromNamespaceAndPath(MODID, "goggles"))),
+                    0.0F,                                       // toughness
+                    0.0F));                                     // knockback resistance
+
+    // "headtorch" armor material — zero protection; renders via
+    // textures/models/armor/headtorch_layer_1.png.
+    public static final DeferredHolder<ArmorMaterial, ArmorMaterial> HEADTORCH_ARMOR_MATERIAL =
+            ARMOR_MATERIALS.register("headtorch", () -> new ArmorMaterial(
+                    Map.of(ArmorItem.Type.HELMET, 0),
+                    9,
+                    SoundEvents.ARMOR_EQUIP_LEATHER,
+                    () -> Ingredient.of(Items.REDSTONE),
+                    List.of(new ArmorMaterial.Layer(
+                            ResourceLocation.fromNamespaceAndPath(MODID, "headtorch"))),
+                    0.0F, 0.0F));
+
     // Redstone Goggles — a head-slot wearable that grants night vision in the dark.
     public static final DeferredItem<Item> REDSTONE_GOGGLES = ITEMS.register("redstone_goggles",
             () -> new GogglesItem(new Item.Properties().stacksTo(1)));
@@ -52,10 +90,15 @@ public class RedstoneLapisMod {
     public static final DeferredItem<Item> REDSTONE_BATTERY = ITEMS.register("redstone_battery",
             () -> new BatteryItem(new Item.Properties().stacksTo(1)));
 
+    // Redstone Miner Headtorch — casts a light spot + red beam where the wearer looks.
+    public static final DeferredItem<Item> REDSTONE_MINER_HEADTORCH = ITEMS.register("redstone_miner_headtorch",
+            () -> new HeadtorchItem(new Item.Properties().stacksTo(1)));
+
     public RedstoneLapisMod(IEventBus modEventBus, ModContainer modContainer) {
         // Register the deferred registers to the mod event bus.
         ITEMS.register(modEventBus);
         DATA_COMPONENTS.register(modEventBus);
+        ARMOR_MATERIALS.register(modEventBus);
 
         // Place our items into a vanilla creative tab.
         modEventBus.addListener(this::addCreative);
@@ -63,12 +106,17 @@ public class RedstoneLapisMod {
         // Grant night vision while the goggles are worn (game/server event bus).
         NeoForge.EVENT_BUS.addListener(GogglesHandler::onPlayerTick);
 
+        // Project the headtorch light spot; clean it up when players leave.
+        NeoForge.EVENT_BUS.addListener(HeadtorchHandler::onPlayerTick);
+        NeoForge.EVENT_BUS.addListener(HeadtorchHandler::onPlayerLogout);
+
         LOGGER.info("Redstone & Lapis Mod loaded");
     }
 
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
             event.accept(REDSTONE_GOGGLES);
+            event.accept(REDSTONE_MINER_HEADTORCH);
             event.accept(REDSTONE_BATTERY);                                  // empty battery
             event.accept(BatteryItem.fullyCharged(REDSTONE_BATTERY.get()));  // pre-charged, for testing
         }

@@ -2,12 +2,14 @@
   "item.redstonelapismod.redstone_goggles": "Redstone Goggles",
   "item.redstonelapismod.redstone_goggle_lens": "Redstone Goggle Lens",
   "item.redstonelapismod.redstone_battery": "Redstone Battery",
+  "item.redstonelapismod.redstone_miner_headtorch": "Redstone Miner Headtorch",
 
   "tooltip.redstonelapismod.redstone_goggles.vision": "Grants night vision while worn",
   "tooltip.redstonelapismod.redstone_goggles.scan": "Nearby ores shimmer with redstone motes",
-  "tooltip.redstonelapismod.redstone_goggles.power": "Requires a charged Redstone Battery",
-  "tooltip.redstonelapismod.redstone_goggles.battery": "Battery: %s / %s",
-  "tooltip.redstonelapismod.redstone_goggles.insert_hint": "Right-click a battery onto the goggles to install it",
+  "tooltip.redstonelapismod.headtorch.beam": "Casts light where you look",
+  "tooltip.redstonelapismod.headgear.power": "Requires a charged Redstone Battery",
+  "tooltip.redstonelapismod.headgear.battery": "Battery: %s / %s",
+  "tooltip.redstonelapismod.headgear.insert_hint": "Right-click a battery onto this item to install it",
   "tooltip.redstonelapismod.battery.charge": "Charge: %s / %s",
   "tooltip.redstonelapismod.battery.desc": "Stores redstone charge to power gadgets",
   "message.redstonelapismod.battery.no_redstone": "No redstone dust to charge with"
