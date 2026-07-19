@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "DGD",
+    "GRG",
+    "DGD"
+  ],
+  "key": {
+    "D": { "item": "minecraft:diamond" },
+    "G": { "item": "minecraft:gold_ingot" },
+    "R": { "item": "minecraft:redstone_block" }
+  },
+  "result": {
+    "id": "redstonelapismod:redstone_goggle_lens",
+    "count": 1
+  }
+}

@@ -1,5 +1,7 @@
 package com.example.redstonelapismod.client;
 
+import com.example.redstonelapismod.BatteryItem;
+import com.example.redstonelapismod.GogglesItem;
 import com.example.redstonelapismod.RedstoneLapisMod;
 
 import net.minecraft.world.entity.EquipmentSlot;
@@ -20,5 +22,19 @@ public final class GogglesClient {
     public static boolean isWorn(Player player) {
         return player != null
                 && player.getItemBySlot(EquipmentSlot.HEAD).is(RedstoneLapisMod.REDSTONE_GOGGLES.get());
+    }
+
+    /**
+     * True when the goggles are worn AND powered — first by the battery socketed
+     * into the goggles, falling back to any loose battery in the inventory.
+     * The client can check this locally because equipment and inventories (and the
+     * charge component on each stack) are synced from the server automatically.
+     */
+    public static boolean isPowered(Player player) {
+        if (!isWorn(player)) {
+            return false;
+        }
+        return GogglesItem.installedCharge(player.getItemBySlot(EquipmentSlot.HEAD)) > 0
+                || BatteryItem.hasCharge(player, 1);
     }
 }

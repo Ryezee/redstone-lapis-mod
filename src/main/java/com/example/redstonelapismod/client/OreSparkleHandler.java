@@ -53,7 +53,7 @@ public final class OreSparkleHandler {
 
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
-        if (level == null || !GogglesClient.isWorn(mc.player)) {
+        if (level == null || !GogglesClient.isPowered(mc.player)) {
             return;
         }
 

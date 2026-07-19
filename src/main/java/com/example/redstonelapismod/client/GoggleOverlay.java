@@ -58,8 +58,8 @@ public final class GoggleOverlay {
     /** Called every frame for our layer; a no-op unless the goggles are actually on. */
     private static void render(GuiGraphics graphics, DeltaTracker delta) {
         Minecraft mc = Minecraft.getInstance();
-        if (!GogglesClient.isWorn(mc.player) || mc.options.hideGui) {
-            return; // goggles off, or the player hid the HUD (F1) / is taking a clean screenshot
+        if (!GogglesClient.isPowered(mc.player) || mc.options.hideGui) {
+            return; // goggles off or battery dead, or the player hid the HUD (F1)
         }
 
         int w = graphics.guiWidth();

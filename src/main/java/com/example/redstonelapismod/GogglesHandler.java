@@ -4,6 +4,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 /**
@@ -12,7 +13,8 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
  * Rather than reimplement lighting, we lean on vanilla's Night Vision, which
  * brightens the lightmap to full — so it cleanly cuts through dark caves and
  * nights. We (re)apply a short effect every tick while the goggles are on the
- * head, and clear it the moment they come off.
+ * head AND powered by a Redstone Battery in the inventory (1 charge/sec), and
+ * clear it the moment they come off or the battery dies.
  *
  * Applied on the logical server so the effect syncs to the client normally;
  * this works in singleplayer (integrated server) and on servers running this mod.
@@ -20,6 +22,9 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 public final class GogglesHandler {
     // Ticks. Kept above 200 so Night Vision renders steady (below that it flickers).
     private static final int EFFECT_DURATION = 220;
+
+    // Charge drained from a battery per second of wearing the goggles (full battery ~16 min).
+    private static final int DRAIN_PER_SECOND = 1;
 
     private GogglesHandler() {}
 
@@ -29,8 +34,23 @@ public final class GogglesHandler {
             return; // server-side only, so the effect syncs to the client
         }
 
-        boolean wearing = player.getItemBySlot(EquipmentSlot.HEAD).is(RedstoneLapisMod.REDSTONE_GOGGLES.get());
-        if (wearing) {
+        ItemStack head = player.getItemBySlot(EquipmentSlot.HEAD);
+        boolean wearing = head.is(RedstoneLapisMod.REDSTONE_GOGGLES.get());
+        // Powered = wearing AND (battery socketed into the goggles has charge,
+        // OR — fallback — a loose battery in the inventory does).
+        int installed = GogglesItem.installedCharge(head);
+        boolean powered = wearing
+                && (installed >= DRAIN_PER_SECOND || BatteryItem.hasCharge(player, DRAIN_PER_SECOND));
+
+        if (powered) {
+            // Bill once a second, not every tick (20 ticks = 1 second).
+            if (player.tickCount % 20 == 0) {
+                if (installed >= DRAIN_PER_SECOND) {
+                    head.set(RedstoneLapisMod.CHARGE.get(), installed - DRAIN_PER_SECOND);
+                } else {
+                    BatteryItem.tryDrain(player, DRAIN_PER_SECOND);
+                }
+            }
             // ambient=false, visible=false, showIcon=false -> no particles, no HUD icon.
             player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, EFFECT_DURATION, 0, false, false, false));
         } else {
