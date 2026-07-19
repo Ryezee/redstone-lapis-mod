@@ -2,8 +2,5 @@
   "item.redstonelapismod.redstone_goggles": "Redstone Goggles",
 
   "tooltip.redstonelapismod.redstone_goggles.vision": "Grants night vision while worn",
-  "tooltip.redstonelapismod.redstone_goggles.scan": "Ore pulse scan reveals nearby ores through walls",
-
-  "key.categories.redstonelapismod": "Redstone & Lapis Mod",
-  "key.redstonelapismod.ore_scan": "Ore Pulse Scan"
+  "tooltip.redstonelapismod.redstone_goggles.scan": "Nearby ores shimmer with redstone motes"
 }
