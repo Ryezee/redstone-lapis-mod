@@ -8,6 +8,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -46,13 +47,26 @@ public final class HeadtorchBeamHandler {
         }
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
-        if (level == null || !GogglesClient.isWearingPowered(mc.player,
-                RedstoneLapisMod.REDSTONE_MINER_HEADTORCH.get())) {
+        if (level == null) {
             return;
         }
+        // Every player near enough for the client to see, not just ourselves —
+        // so other people's headtorch beams render too. Known gap: a remote
+        // wearer powered ONLY by a loose pocket battery shows no beam, because
+        // other players' inventories are never synced to us (their equipped
+        // gear and its charge component are).
+        for (Player player : level.players()) {
+            if (GogglesClient.isWearingPowered(player,
+                    RedstoneLapisMod.REDSTONE_MINER_HEADTORCH.get())) {
+                spawnBeam(level, player);
+            }
+        }
+    }
 
-        Vec3 eye = mc.player.getEyePosition();
-        Vec3 look = mc.player.getLookAngle(); // unit vector of the gaze
+    /** One pulse of cone motes along {@code player}'s gaze. */
+    private static void spawnBeam(ClientLevel level, Player player) {
+        Vec3 eye = player.getEyePosition();
+        Vec3 look = player.getLookAngle(); // unit vector of the gaze
 
         // Build an orthonormal basis around the look axis so we can aim motes
         // anywhere inside the cone: look = "forward", right & up span the disc.

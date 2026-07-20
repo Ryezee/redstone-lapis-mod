@@ -14,6 +14,7 @@ import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ArmorMaterial;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.ItemAttributeModifiers;
 
 /**
  * Base class for battery-powered head gadgets (goggles, headtorch, ...).
@@ -101,6 +102,17 @@ public class PoweredHeadgearItem extends ArmorItem {
     // ------------------------------------------------------------------
     // Display — charge bar for the installed battery, like BatteryItem's.
     // ------------------------------------------------------------------
+
+    /**
+     * ArmorItem auto-attaches an armor/toughness attribute list, and vanilla's
+     * tooltip prints every entry even at zero ("When on Head: +0 Armor").
+     * Our gear gives no protection, so report no modifiers at all — this hides
+     * the tooltip block and skips the (zero-effect) stat application.
+     */
+    @Override
+    public ItemAttributeModifiers getDefaultAttributeModifiers(ItemStack stack) {
+        return ItemAttributeModifiers.EMPTY;
+    }
 
     @Override
     public boolean isBarVisible(ItemStack stack) {
