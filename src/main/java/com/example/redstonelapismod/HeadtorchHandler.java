@@ -42,8 +42,10 @@ public final class HeadtorchHandler {
     private static final int SPOT_RANGE = 8;
     /** Light level of the projected spot (redstone torch is 7, torch 14). */
     private static final int SPOT_LIGHT_LEVEL = 14;
-    /** Recompute the spot every N ticks (4 = five updates per second). */
-    private static final int SPOT_UPDATE_TICKS = 4;
+    /** Recompute the spot every N ticks (1 = every tick, 20 updates per second).
+     *  Safe: block/light work only happens when the target block actually changes
+     *  (see moveSpot's dedup), so idle cost is just one cheap raycast per tick. */
+    private static final int SPOT_UPDATE_TICKS = 1;
     /** Bill 1 charge every N ticks (40 = half the goggles' drain rate). */
     private static final int DRAIN_INTERVAL_TICKS = 40;
 
