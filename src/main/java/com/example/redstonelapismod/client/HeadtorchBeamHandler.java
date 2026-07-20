@@ -26,8 +26,9 @@ public final class HeadtorchBeamHandler {
     private static final int BEAM_INTERVAL_TICKS = 2;
     /** Motes per pulse. */
     private static final int BEAM_PARTICLES_PER_PULSE = 8;
-    /** Beam length in blocks. */
-    private static final double BEAM_RANGE = 6.0;
+    /** Beam length in blocks — matches HeadtorchHandler.SPOT_RANGE so motes
+     *  never sparkle beyond where the lamp can actually cast light. */
+    private static final double BEAM_RANGE = 4.0;
     /** Half-angle of the cone: 30° each side of the gaze = 60° total. */
     private static final double BEAM_HALF_ANGLE_DEG = 30.0;
     /** Redstone-red mote, slightly smaller than the ore sparkles. */

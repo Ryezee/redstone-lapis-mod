@@ -38,8 +38,11 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
  * block per player — inert and harmless.
  */
 public final class HeadtorchHandler {
-    /** How far ahead (blocks) the torch can throw its spot. */
-    private static final int SPOT_RANGE = 8;
+    /** Leash length: the spot sits at most this many blocks ahead of the eyes.
+     *  Kept short on purpose — a headlamp is a glow that travels WITH the wearer,
+     *  biased toward the gaze; a long range let you throw light down a hallway
+     *  while standing still, which read as a detached laser pointer. */
+    private static final int SPOT_RANGE = 4;
     /** Light level of the projected spot (redstone torch is 7, torch 14). */
     private static final int SPOT_LIGHT_LEVEL = 14;
     /** Recompute the spot every N ticks (1 = every tick, 20 updates per second).
