@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "G G",
+    " R ",
+    "G G"
+  ],
+  "key": {
+    "G": { "item": "minecraft:gold_ingot" },
+    "R": { "item": "minecraft:redstone" }
+  },
+  "result": {
+    "id": "redstonelapismod:redstone_powered_gem",
+    "count": 1
+  }
+}

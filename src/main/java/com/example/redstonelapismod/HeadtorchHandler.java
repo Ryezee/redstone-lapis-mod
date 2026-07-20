@@ -44,7 +44,7 @@ public final class HeadtorchHandler {
      *  while standing still, which read as a detached laser pointer. */
     private static final int SPOT_RANGE = 4;
     /** Light level of the projected spot (redstone torch is 7, torch 14). */
-    private static final int SPOT_LIGHT_LEVEL = 10;
+    private static final int SPOT_LIGHT_LEVEL = 11;
     /** Recompute the spot every N ticks (1 = every tick, 20 updates per second).
      *  Safe: block/light work only happens when the target block actually changes
      *  (see moveSpot's dedup), so idle cost is just one cheap raycast per tick. */

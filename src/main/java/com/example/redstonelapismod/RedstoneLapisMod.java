@@ -86,6 +86,10 @@ public class RedstoneLapisMod {
     public static final DeferredItem<Item> REDSTONE_GOGGLE_LENS = ITEMS.register("redstone_goggle_lens",
             () -> new Item(new Item.Properties()));
 
+    // Redstone Powered Gem — crafting component; the headtorch's lamp "bulb".
+    public static final DeferredItem<Item> REDSTONE_POWERED_GEM = ITEMS.register("redstone_powered_gem",
+            () -> new Item(new Item.Properties()));
+
     // Redstone Battery — portable, reusable charge storage that powers redstone gadgets.
     public static final DeferredItem<Item> REDSTONE_BATTERY = ITEMS.register("redstone_battery",
             () -> new BatteryItem(new Item.Properties().stacksTo(1)));
@@ -122,6 +126,7 @@ public class RedstoneLapisMod {
         }
         if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
             event.accept(REDSTONE_GOGGLE_LENS);
+            event.accept(REDSTONE_POWERED_GEM);
         }
     }
 }

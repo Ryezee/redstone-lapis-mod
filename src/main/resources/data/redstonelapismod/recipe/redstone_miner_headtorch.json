@@ -2,13 +2,11 @@
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
   "pattern": [
-    "LLL",
-    "IRI"
+    "LGL"
   ],
   "key": {
     "L": { "item": "minecraft:leather" },
-    "I": { "item": "minecraft:iron_ingot" },
-    "R": { "item": "minecraft:redstone_torch" }
+    "G": { "item": "redstonelapismod:redstone_powered_gem" }
   },
   "result": {
     "id": "redstonelapismod:redstone_miner_headtorch",
