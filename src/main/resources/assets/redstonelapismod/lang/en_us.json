@@ -5,6 +5,9 @@
   "item.redstonelapismod.redstone_battery": "Redstone Battery",
   "item.redstonelapismod.redstone_miner_headtorch": "Redstone Miner Headtorch",
   "item.redstonelapismod.redstone_rocket_boots": "Redstone Rocket Boots",
+  "item.redstonelapismod.lapis_powered_gem": "Lapis Powered Gem",
+  "item.redstonelapismod.concentrated_lapis_lazuli": "Concentrated Lapis Lazuli",
+  "item.redstonelapismod.lapis_echo_lens": "Lapis Echo Lens",
 
   "tooltip.redstonelapismod.redstone_goggles.vision": "Grants night vision while worn",
   "tooltip.redstonelapismod.redstone_goggles.scan": "Nearby ores shimmer with redstone motes",
@@ -16,5 +19,12 @@
   "tooltip.redstonelapismod.headgear.insert_hint": "Right-click a battery onto this item to install it",
   "tooltip.redstonelapismod.battery.charge": "Charge: %s / %s",
   "tooltip.redstonelapismod.battery.desc": "Stores redstone charge to power gadgets",
-  "message.redstonelapismod.battery.no_redstone": "No redstone dust to charge with"
+  "tooltip.redstonelapismod.echo_lens.scan": "Sends a sonar pulse that reveals nearby creatures through walls",
+  "tooltip.redstonelapismod.echo_lens.cost": "Costs %s lapis charge — range %s blocks",
+  "tooltip.redstonelapismod.lapis_gadget.charge": "Lapis charge: %s / %s",
+  "tooltip.redstonelapismod.lapis_gadget.feed_hint": "Right-click Concentrated Lapis Lazuli onto this item to fuel it",
+  "tooltip.redstonelapismod.concentrated_lapis.desc": "A dense shard of deep-earth lapis, humming with power",
+  "tooltip.redstonelapismod.concentrated_lapis.fuel": "Fuels lapis gadgets (+%s charge)",
+  "message.redstonelapismod.battery.no_redstone": "No redstone dust to charge with",
+  "message.redstonelapismod.echo_lens.no_charge": "The lens is dark — no lapis charge"
 }

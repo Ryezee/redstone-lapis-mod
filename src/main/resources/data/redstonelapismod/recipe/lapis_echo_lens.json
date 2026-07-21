@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    " D ",
+    "DGD",
+    " D "
+  ],
+  "key": {
+    "D": {
+      "item": "minecraft:diamond"
+    },
+    "G": {
+      "item": "redstonelapismod:lapis_powered_gem"
+    }
+  },
+  "result": {
+    "id": "redstonelapismod:lapis_echo_lens",
+    "count": 1
+  }
+}

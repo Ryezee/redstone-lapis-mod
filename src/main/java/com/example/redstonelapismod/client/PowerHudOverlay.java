@@ -1,6 +1,7 @@
 package com.example.redstonelapismod.client;
 
 import com.example.redstonelapismod.BatteryItem;
+import com.example.redstonelapismod.LapisGadgetItem;
 import com.example.redstonelapismod.PoweredGearItem;
 import com.example.redstonelapismod.RedstoneLapisMod;
 
@@ -39,8 +40,12 @@ public final class PowerHudOverlay {
 
     /** Fill colors per power type (0xAARRGGBB). */
     private static final int REDSTONE_FILL = 0xFFE83232;   // matches the item charge bars
+    private static final int LAPIS_FILL = 0xFF3C6CE8;      // matches LapisGadgetItem's bar
     private static final int BACKGROUND = 0xAA141414;
     private static final int CHARGE_INDICATOR_FILL = 0xFFFFE080; // white-hot blast charge sliver
+
+    /** When both bars show, the lapis bar sits this many pixels above the red one. */
+    private static final int STACKED_BAR_LIFT = 8;
 
     private static final ResourceLocation LAYER_ID =
             ResourceLocation.fromNamespaceAndPath(RedstoneLapisMod.MODID, "power_hud");
@@ -64,7 +69,7 @@ public final class PowerHudOverlay {
             return;
         }
 
-        // Gauge only appears while a powered gadget is actually worn.
+        // RED pool appears while a redstone gadget is worn.
         boolean wearingGadget = false;
         int charge = 0;
         int capacity = 0;
@@ -78,32 +83,53 @@ public final class PowerHudOverlay {
                 }
             }
         }
-        if (!wearingGadget) {
-            return;
+
+        // BLUE tank appears while a lapis gadget is held in either hand
+        // (main hand wins if both — matches vanilla's right-click priority).
+        ItemStack lapisGadget = ItemStack.EMPTY;
+        if (player.getMainHandItem().getItem() instanceof LapisGadgetItem) {
+            lapisGadget = player.getMainHandItem();
+        } else if (player.getOffhandItem().getItem() instanceof LapisGadgetItem) {
+            lapisGadget = player.getOffhandItem();
         }
 
-        // Pocket batteries join the pool — they're real spendable charge (the
-        // drain logic falls back to them), and each adds its 1000 of capacity.
-        // The inventory container covers main + armor + offhand; armor slots
-        // hold gear (not BatteryItem), so nothing is double-counted.
-        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
-            ItemStack stack = player.getInventory().getItem(i);
-            if (stack.getItem() instanceof BatteryItem) {
-                charge += BatteryItem.getCharge(stack);
-                capacity += BatteryItem.MAX_CHARGE;
-            }
+        if (!wearingGadget && lapisGadget.isEmpty()) {
+            return;
         }
 
         int x = graphics.guiWidth() / 2 - BAR_WIDTH / 2;
         int y = graphics.guiHeight() - BAR_BOTTOM_OFFSET;
-        drawPowerBar(graphics, x, y, capacity == 0 ? 0f : (float) charge / capacity, REDSTONE_FILL);
 
-        // While a boot blast is charging, a bright sliver grows above the bar.
-        float blastCharge = RocketBootsClientHandler.chargeFraction();
-        if (blastCharge > 0f) {
-            int cw = Math.round((BAR_WIDTH / 2f) * blastCharge);
-            int cx = graphics.guiWidth() / 2 - cw / 2;
-            graphics.fill(cx, y - 4, cx + cw, y - 2, CHARGE_INDICATOR_FILL);
+        if (wearingGadget) {
+            // Pocket batteries join the pool — they're real spendable charge (the
+            // drain logic falls back to them), and each adds its 1000 of capacity.
+            // The inventory container covers main + armor + offhand; armor slots
+            // hold gear (not BatteryItem), so nothing is double-counted.
+            for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+                ItemStack stack = player.getInventory().getItem(i);
+                if (stack.getItem() instanceof BatteryItem) {
+                    charge += BatteryItem.getCharge(stack);
+                    capacity += BatteryItem.MAX_CHARGE;
+                }
+            }
+            drawPowerBar(graphics, x, y, capacity == 0 ? 0f : (float) charge / capacity, REDSTONE_FILL);
+
+            // While a boot blast is charging, a bright sliver grows above the bar
+            // (in the 2px gap left free below a stacked lapis bar).
+            float blastCharge = RocketBootsClientHandler.chargeFraction();
+            if (blastCharge > 0f) {
+                int cw = Math.round((BAR_WIDTH / 2f) * blastCharge);
+                int cx = graphics.guiWidth() / 2 - cw / 2;
+                graphics.fill(cx, y - 4, cx + cw, y - 2, CHARGE_INDICATOR_FILL);
+            }
+        }
+
+        if (!lapisGadget.isEmpty()) {
+            // Internal-tank model: the bar reads the held gadget's own tank.
+            int lapisY = wearingGadget ? y - STACKED_BAR_LIFT : y;
+            drawPowerBar(graphics, x, lapisY,
+                    (float) LapisGadgetItem.getCharge(lapisGadget) / LapisGadgetItem.TANK_CAPACITY,
+                    LAPIS_FILL);
         }
     }
 

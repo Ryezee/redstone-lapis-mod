@@ -18,6 +18,7 @@ import net.minecraft.world.item.ArmorMaterial;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -114,6 +115,21 @@ public class RedstoneLapisMod {
     public static final DeferredItem<Item> REDSTONE_ROCKET_BOOTS = ITEMS.register("redstone_rocket_boots",
             () -> new RocketBootsItem(new Item.Properties().stacksTo(1)));
 
+    // --- The lapis family: exclusive, expensive, loot-fueled. ---
+
+    // Lapis Powered Gem — crafting component; heart of every lapis gadget.
+    public static final DeferredItem<Item> LAPIS_POWERED_GEM = ITEMS.register("lapis_powered_gem",
+            () -> new Item(new Item.Properties()));
+
+    // Concentrated Lapis Lazuli — loot-only fuel cell for lapis gadget tanks.
+    // Rarity.RARE renders the name in aqua — the "this is special" signal.
+    public static final DeferredItem<Item> CONCENTRATED_LAPIS_LAZULI = ITEMS.register("concentrated_lapis_lazuli",
+            () -> new ConcentratedLapisItem(new Item.Properties().stacksTo(16).rarity(Rarity.RARE)));
+
+    // Lapis Echo Lens — handheld sonar: pulse reveals nearby creatures through walls.
+    public static final DeferredItem<Item> LAPIS_ECHO_LENS = ITEMS.register("lapis_echo_lens",
+            () -> new EchoLensItem(new Item.Properties().stacksTo(1)));
+
     public RedstoneLapisMod(IEventBus modEventBus, ModContainer modContainer) {
         // Register the deferred registers to the mod event bus.
         ITEMS.register(modEventBus);
@@ -135,6 +151,13 @@ public class RedstoneLapisMod {
         NeoForge.EVENT_BUS.addListener(RocketBootsHandler::onLivingFall);
         NeoForge.EVENT_BUS.addListener(RocketBootsHandler::onPlayerLogout);
 
+        // Echo Lens: tick the expanding sonar pulses; drop them when the server dies.
+        NeoForge.EVENT_BUS.addListener(EchoPulseHandler::onServerTickPost);
+        NeoForge.EVENT_BUS.addListener(EchoPulseHandler::onServerStopped);
+
+        // Concentrated Lapis Lazuli spawns in underground structure chests.
+        NeoForge.EVENT_BUS.addListener(LapisLootHandler::onLootTableLoad);
+
         LOGGER.info("Redstone & Lapis Mod loaded");
     }
 
@@ -145,10 +168,14 @@ public class RedstoneLapisMod {
             event.accept(REDSTONE_ROCKET_BOOTS);
             event.accept(REDSTONE_BATTERY);                                  // empty battery
             event.accept(BatteryItem.fullyCharged(REDSTONE_BATTERY.get()));  // pre-charged, for testing
+            event.accept(LAPIS_ECHO_LENS);                                   // empty tank
+            event.accept(LapisGadgetItem.fullyFueled(LAPIS_ECHO_LENS.get())); // full tank, for testing
+            event.accept(CONCENTRATED_LAPIS_LAZULI);
         }
         if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
             event.accept(REDSTONE_GOGGLE_LENS);
             event.accept(REDSTONE_POWERED_GEM);
+            event.accept(LAPIS_POWERED_GEM);
         }
     }
 }
