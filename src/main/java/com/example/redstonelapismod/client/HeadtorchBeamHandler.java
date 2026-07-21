@@ -8,6 +8,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
@@ -57,7 +58,7 @@ public final class HeadtorchBeamHandler {
         // gear and its charge component are).
         for (Player player : level.players()) {
             if (GogglesClient.isWearingPowered(player,
-                    RedstoneLapisMod.REDSTONE_MINER_HEADTORCH.get())) {
+                    RedstoneLapisMod.REDSTONE_MINER_HEADTORCH.get(), EquipmentSlot.HEAD)) {
                 spawnBeam(level, player);
             }
         }

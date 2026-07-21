@@ -78,6 +78,18 @@ public class RedstoneLapisMod {
                             ResourceLocation.fromNamespaceAndPath(MODID, "headtorch"))),
                     0.0F, 0.0F));
 
+    // "rocket_boots" armor material — zero protection; renders via
+    // textures/models/armor/rocket_boots_layer_1.png (boots draw from layer_1).
+    public static final DeferredHolder<ArmorMaterial, ArmorMaterial> ROCKET_BOOTS_ARMOR_MATERIAL =
+            ARMOR_MATERIALS.register("rocket_boots", () -> new ArmorMaterial(
+                    Map.of(ArmorItem.Type.BOOTS, 0),
+                    9,
+                    SoundEvents.ARMOR_EQUIP_LEATHER,
+                    () -> Ingredient.of(Items.REDSTONE),
+                    List.of(new ArmorMaterial.Layer(
+                            ResourceLocation.fromNamespaceAndPath(MODID, "rocket_boots"))),
+                    0.0F, 0.0F));
+
     // Redstone Goggles — a head-slot wearable that grants night vision in the dark.
     public static final DeferredItem<Item> REDSTONE_GOGGLES = ITEMS.register("redstone_goggles",
             () -> new GogglesItem(new Item.Properties().stacksTo(1)));
@@ -98,6 +110,10 @@ public class RedstoneLapisMod {
     public static final DeferredItem<Item> REDSTONE_MINER_HEADTORCH = ITEMS.register("redstone_miner_headtorch",
             () -> new HeadtorchItem(new Item.Properties().stacksTo(1)));
 
+    // Redstone Rocket Boots — mid-air rocket jump + elytra thrust, battery-powered.
+    public static final DeferredItem<Item> REDSTONE_ROCKET_BOOTS = ITEMS.register("redstone_rocket_boots",
+            () -> new RocketBootsItem(new Item.Properties().stacksTo(1)));
+
     public RedstoneLapisMod(IEventBus modEventBus, ModContainer modContainer) {
         // Register the deferred registers to the mod event bus.
         ITEMS.register(modEventBus);
@@ -114,6 +130,12 @@ public class RedstoneLapisMod {
         NeoForge.EVENT_BUS.addListener(HeadtorchHandler::onPlayerTick);
         NeoForge.EVENT_BUS.addListener(HeadtorchHandler::onPlayerLogout);
 
+        // Rocket boots: thrust ticking, fall-damage grace, state cleanup.
+        // (The jump/thrust payloads arrive via network/ModNetworking.)
+        NeoForge.EVENT_BUS.addListener(RocketBootsHandler::onPlayerTick);
+        NeoForge.EVENT_BUS.addListener(RocketBootsHandler::onLivingFall);
+        NeoForge.EVENT_BUS.addListener(RocketBootsHandler::onPlayerLogout);
+
         LOGGER.info("Redstone & Lapis Mod loaded");
     }
 
@@ -121,6 +143,7 @@ public class RedstoneLapisMod {
         if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
             event.accept(REDSTONE_GOGGLES);
             event.accept(REDSTONE_MINER_HEADTORCH);
+            event.accept(REDSTONE_ROCKET_BOOTS);
             event.accept(REDSTONE_BATTERY);                                  // empty battery
             event.accept(BatteryItem.fullyCharged(REDSTONE_BATTERY.get()));  // pre-charged, for testing
         }

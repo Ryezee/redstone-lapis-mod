@@ -4,6 +4,7 @@ import java.util.List;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 
@@ -12,12 +13,12 @@ import net.minecraft.world.item.TooltipFlag;
  * {@link HeadtorchHandler} keeps an invisible vanilla light block at the spot
  * the player is looking at (real directional lighting response), and the client
  * draws a red dust-mote beam cone along the gaze. All socket/charge plumbing
- * comes from {@link PoweredHeadgearItem}.
+ * comes from {@link PoweredGearItem}.
  */
-public class HeadtorchItem extends PoweredHeadgearItem {
+public class HeadtorchItem extends PoweredGearItem {
 
     public HeadtorchItem(Properties properties) {
-        super(RedstoneLapisMod.HEADTORCH_ARMOR_MATERIAL, properties);
+        super(RedstoneLapisMod.HEADTORCH_ARMOR_MATERIAL, ArmorItem.Type.HELMET, properties);
     }
 
     @Override

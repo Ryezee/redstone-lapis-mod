@@ -4,10 +4,13 @@
   "item.redstonelapismod.redstone_powered_gem": "Redstone Powered Gem",
   "item.redstonelapismod.redstone_battery": "Redstone Battery",
   "item.redstonelapismod.redstone_miner_headtorch": "Redstone Miner Headtorch",
+  "item.redstonelapismod.redstone_rocket_boots": "Redstone Rocket Boots",
 
   "tooltip.redstonelapismod.redstone_goggles.vision": "Grants night vision while worn",
   "tooltip.redstonelapismod.redstone_goggles.scan": "Nearby ores shimmer with redstone motes",
   "tooltip.redstonelapismod.headtorch.beam": "Casts light where you look",
+  "tooltip.redstonelapismod.rocket_boots.jump": "Press jump again in mid-air to rocket upward",
+  "tooltip.redstonelapismod.rocket_boots.thrust": "Hold jump while gliding for rocket thrust",
   "tooltip.redstonelapismod.headgear.power": "Requires a charged Redstone Battery",
   "tooltip.redstonelapismod.headgear.battery": "Battery: %s / %s",
   "tooltip.redstonelapismod.headgear.insert_hint": "Right-click a battery onto this item to install it",

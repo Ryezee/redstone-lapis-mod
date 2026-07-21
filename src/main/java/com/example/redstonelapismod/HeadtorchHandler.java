@@ -65,10 +65,10 @@ public final class HeadtorchHandler {
 
         ItemStack head = player.getItemBySlot(EquipmentSlot.HEAD);
         boolean lit = head.is(RedstoneLapisMod.REDSTONE_MINER_HEADTORCH.get())
-                && PoweredHeadgearItem.isPowered(player, head, 1);
+                && PoweredGearItem.isPowered(player, head, 1);
 
         if (lit && player.tickCount % DRAIN_INTERVAL_TICKS == 0) {
-            PoweredHeadgearItem.drainOnePowerTick(player, head, 1);
+            PoweredGearItem.drainOnePowerTick(player, head, 1);
         }
 
         if (player.tickCount % SPOT_UPDATE_TICKS != 0) {

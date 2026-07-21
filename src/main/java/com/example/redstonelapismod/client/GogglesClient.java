@@ -1,7 +1,7 @@
 package com.example.redstonelapismod.client;
 
 import com.example.redstonelapismod.BatteryItem;
-import com.example.redstonelapismod.PoweredHeadgearItem;
+import com.example.redstonelapismod.PoweredGearItem;
 import com.example.redstonelapismod.RedstoneLapisMod;
 
 import net.minecraft.world.entity.EquipmentSlot;
@@ -31,23 +31,23 @@ public final class GogglesClient {
      * into the goggles, falling back to any loose battery in the inventory.
      */
     public static boolean isPowered(Player player) {
-        return isWearingPowered(player, RedstoneLapisMod.REDSTONE_GOGGLES.get());
+        return isWearingPowered(player, RedstoneLapisMod.REDSTONE_GOGGLES.get(), EquipmentSlot.HEAD);
     }
 
     /**
-     * Generic form for any powered headgear (goggles, headtorch, ...): worn in the
-     * head slot AND the socketed battery (first) or a loose inventory battery has
-     * charge. The client can check this locally because equipment and inventories
-     * (and the charge component on each stack) are synced from the server.
+     * Generic form for any powered gear (goggles, headtorch, rocket boots, ...):
+     * worn in the given slot AND the socketed battery (first) or a loose inventory
+     * battery has charge. The client can check this locally because equipment
+     * (and the charge component on each stack) is synced from the server.
      */
-    public static boolean isWearingPowered(Player player, Item item) {
+    public static boolean isWearingPowered(Player player, Item item, EquipmentSlot slot) {
         if (player == null) {
             return false;
         }
-        ItemStack head = player.getItemBySlot(EquipmentSlot.HEAD);
-        if (!head.is(item)) {
+        ItemStack gear = player.getItemBySlot(slot);
+        if (!gear.is(item)) {
             return false;
         }
-        return PoweredHeadgearItem.installedCharge(head) > 0 || BatteryItem.hasCharge(player, 1);
+        return PoweredGearItem.installedCharge(gear) > 0 || BatteryItem.hasCharge(player, 1);
     }
 }

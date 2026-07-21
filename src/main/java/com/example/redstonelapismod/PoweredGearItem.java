@@ -17,16 +17,18 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 
 /**
- * Base class for battery-powered head gadgets (goggles, headtorch, ...).
- * Owns the battery socket: a battery is the charge it carries and nothing else,
- * so "installing" one just moves its charge number onto the gear's stack (the
- * same CHARGE component) and consumes the item; "ejecting" mints a battery
- * carrying that number back out. Also owns the charge bar and battery tooltip.
+ * Base class for battery-powered wearable gadgets (goggles, headtorch, rocket
+ * boots, ...). Owns the battery socket: a battery is the charge it carries and
+ * nothing else, so "installing" one just moves its charge number onto the
+ * gear's stack (the same CHARGE component) and consumes the item; "ejecting"
+ * mints a battery carrying that number back out. Also owns the charge bar and
+ * battery tooltip. The armor slot (helmet, boots, ...) is chosen per item via
+ * the constructor's {@link ArmorItem.Type}.
  */
-public class PoweredHeadgearItem extends ArmorItem {
+public class PoweredGearItem extends ArmorItem {
 
-    public PoweredHeadgearItem(Holder<ArmorMaterial> material, Properties properties) {
-        super(material, ArmorItem.Type.HELMET, properties);
+    public PoweredGearItem(Holder<ArmorMaterial> material, ArmorItem.Type type, Properties properties) {
+        super(material, type, properties);
     }
 
     // ------------------------------------------------------------------

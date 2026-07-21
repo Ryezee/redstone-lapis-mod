@@ -4,21 +4,22 @@ import java.util.List;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 
 /**
  * Battery-powered head goggles. The socket/charge-bar/battery-tooltip plumbing
- * lives in {@link PoweredHeadgearItem}; the "goggles" ArmorMaterial in
+ * lives in {@link PoweredGearItem}; the "goggles" ArmorMaterial in
  * {@link RedstoneLapisMod} makes vanilla's armor renderer draw
  * textures/models/armor/goggles_layer_1.png fitted to the head.
  * While worn and powered, {@link GogglesHandler} grants vision in the dark and
  * the client sprinkles ore sparkles + the visor overlay.
  */
-public class GogglesItem extends PoweredHeadgearItem {
+public class GogglesItem extends PoweredGearItem {
 
     public GogglesItem(Properties properties) {
-        super(RedstoneLapisMod.GOGGLES_ARMOR_MATERIAL, properties);
+        super(RedstoneLapisMod.GOGGLES_ARMOR_MATERIAL, ArmorItem.Type.HELMET, properties);
     }
 
     @Override
