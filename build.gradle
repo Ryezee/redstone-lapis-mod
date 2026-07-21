@@ -11,7 +11,7 @@ ext {
     mod_id = 'redstonelapismod'
     mod_name = 'Redstone & Lapis Mod'
     // '-snapshot' marks unreleased dev builds; drop the suffix when cutting the release.
-    mod_version = '0.4.0'
+    mod_version = '0.5.0-snapshot'
     mod_group_id = 'com.example.redstonelapismod'
 }
 
