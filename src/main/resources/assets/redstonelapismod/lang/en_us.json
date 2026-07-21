@@ -5,6 +5,8 @@
   "item.redstonelapismod.redstone_battery": "Redstone Battery",
   "item.redstonelapismod.redstone_miner_headtorch": "Redstone Miner Headtorch",
   "item.redstonelapismod.redstone_rocket_boots": "Redstone Rocket Boots",
+  "item.redstonelapismod.redstone_rocket": "Redstone Rocket",
+  "item.redstonelapismod.redstone_rocket_launcher": "Redstone Rocket Launcher",
   "item.redstonelapismod.lapis_powered_gem": "Lapis Powered Gem",
   "item.redstonelapismod.concentrated_lapis_lazuli": "Concentrated Lapis Lazuli",
   "item.redstonelapismod.lapis_echo_lens": "Lapis Echo Lens",
@@ -19,6 +21,9 @@
   "tooltip.redstonelapismod.headgear.insert_hint": "Right-click a battery onto this item to install it",
   "tooltip.redstonelapismod.battery.charge": "Charge: %s / %s",
   "tooltip.redstonelapismod.battery.desc": "Stores redstone charge to power gadgets",
+  "tooltip.redstonelapismod.rocket_launcher.fire": "Fires a redstone rocket where you aim",
+  "tooltip.redstonelapismod.rocket_launcher.blast": "Concussive blast — hurls creatures, leaves blocks intact",
+  "tooltip.redstonelapismod.redstone_rocket.desc": "Ammunition for the Redstone Rocket Launcher",
   "tooltip.redstonelapismod.echo_lens.scan": "Sends a sonar pulse that reveals nearby creatures through walls",
   "tooltip.redstonelapismod.echo_lens.cost": "Costs %s lapis charge — range %s blocks",
   "tooltip.redstonelapismod.lapis_gadget.charge": "Lapis charge: %s / %s",
@@ -26,5 +31,7 @@
   "tooltip.redstonelapismod.concentrated_lapis.desc": "A dense shard of deep-earth lapis, humming with power",
   "tooltip.redstonelapismod.concentrated_lapis.fuel": "Fuels lapis gadgets (+%s charge)",
   "message.redstonelapismod.battery.no_redstone": "No redstone dust to charge with",
-  "message.redstonelapismod.echo_lens.no_charge": "The lens is dark — no lapis charge"
+  "message.redstonelapismod.echo_lens.no_charge": "The lens is dark — no lapis charge",
+  "message.redstonelapismod.rocket_launcher.no_ammo": "No redstone rockets left",
+  "entity.redstonelapismod.redstone_rocket": "Redstone Rocket"
 }

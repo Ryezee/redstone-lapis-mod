@@ -13,6 +13,8 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.ExtraCodecs;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ArmorMaterial;
 import net.minecraft.world.item.CreativeModeTabs;
@@ -49,6 +51,22 @@ public class RedstoneLapisMod {
             DATA_COMPONENTS.registerComponentType("charge", builder -> builder
                     .persistent(ExtraCodecs.NON_NEGATIVE_INT)
                     .networkSynchronized(ByteBufCodecs.VAR_INT));
+
+    // Deferred register for this mod's entity types (things that exist freely in
+    // the world — not on the block grid). First customer: the rocket projectile.
+    public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =
+            DeferredRegister.create(Registries.ENTITY_TYPE, MODID);
+
+    // The Redstone Rocket in flight. Snowball-family settings: a 0.25-block cube
+    // hitbox, tracked by clients within 4 chunks, position resync every 10 ticks
+    // (clients predict movement between resyncs).
+    public static final DeferredHolder<EntityType<?>, EntityType<RedstoneRocketEntity>> REDSTONE_ROCKET_ENTITY =
+            ENTITY_TYPES.register("redstone_rocket", () -> EntityType.Builder
+                    .<RedstoneRocketEntity>of(RedstoneRocketEntity::new, MobCategory.MISC)
+                    .sized(0.25F, 0.25F)
+                    .clientTrackingRange(4)
+                    .updateInterval(10)
+                    .build("redstone_rocket"));
 
     // Deferred register for armor materials (a registry since 1.20.5, like items/components).
     public static final DeferredRegister<ArmorMaterial> ARMOR_MATERIALS =
@@ -115,6 +133,14 @@ public class RedstoneLapisMod {
     public static final DeferredItem<Item> REDSTONE_ROCKET_BOOTS = ITEMS.register("redstone_rocket_boots",
             () -> new RocketBootsItem(new Item.Properties().stacksTo(1)));
 
+    // Redstone Rocket — ammo for the launcher; also the in-flight sprite.
+    public static final DeferredItem<Item> REDSTONE_ROCKET = ITEMS.register("redstone_rocket",
+            () -> new RedstoneRocketItem(new Item.Properties().stacksTo(16)));
+
+    // Redstone Rocket Launcher — fires rockets as a concussive, block-safe blast.
+    public static final DeferredItem<Item> REDSTONE_ROCKET_LAUNCHER = ITEMS.register("redstone_rocket_launcher",
+            () -> new RedstoneRocketLauncherItem(new Item.Properties().stacksTo(1)));
+
     // --- The lapis family: exclusive, expensive, loot-fueled. ---
 
     // Lapis Powered Gem — crafting component; heart of every lapis gadget.
@@ -135,6 +161,7 @@ public class RedstoneLapisMod {
         ITEMS.register(modEventBus);
         DATA_COMPONENTS.register(modEventBus);
         ARMOR_MATERIALS.register(modEventBus);
+        ENTITY_TYPES.register(modEventBus);
 
         // Place our items into a vanilla creative tab.
         modEventBus.addListener(this::addCreative);
@@ -171,6 +198,10 @@ public class RedstoneLapisMod {
             event.accept(LAPIS_ECHO_LENS);                                   // empty tank
             event.accept(LapisGadgetItem.fullyFueled(LAPIS_ECHO_LENS.get())); // full tank, for testing
             event.accept(CONCENTRATED_LAPIS_LAZULI);
+        }
+        if (event.getTabKey() == CreativeModeTabs.COMBAT) {
+            event.accept(REDSTONE_ROCKET_LAUNCHER);
+            event.accept(REDSTONE_ROCKET);
         }
         if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
             event.accept(REDSTONE_GOGGLE_LENS);
