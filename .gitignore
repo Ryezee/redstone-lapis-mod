@@ -38,3 +38,6 @@ run/
 **/src/generated/**/.cache/
 repo/
 !**/src/**/repo/
+
+# VS Code workspace files (belong at repo root, untracked; must never enter the jar)
+*.code-workspace
