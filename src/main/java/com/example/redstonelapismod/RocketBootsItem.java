@@ -9,12 +9,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 
 /**
- * Battery-powered rocket boots. While worn and powered: press jump again in
- * mid-air for a ~10-block rocket jump ({@link RocketBootsHandler} bills it and
- * forgives the landing), and hold jump while elytra-gliding for continuous
- * rocket thrust stronger than a firework. All socket/charge plumbing comes
- * from {@link PoweredGearItem}; the input detection lives client-side in
- * RocketBootsClientHandler.
+ * Battery-powered rocket boots. While worn and powered: HOLD jump to charge a
+ * redstone blast, release to fire — straight up when grounded/falling, a big
+ * firework-style forward punch while elytra-gliding. Charge time scales the
+ * blast ({@link RocketBootsHandler} bills it proportionally and forgives the
+ * landing). All socket/charge plumbing comes from {@link PoweredGearItem};
+ * the charge machine lives client-side in RocketBootsClientHandler.
  */
 public class RocketBootsItem extends PoweredGearItem {
 
@@ -25,9 +25,9 @@ public class RocketBootsItem extends PoweredGearItem {
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip,
             TooltipFlag flag) {
-        tooltip.add(Component.translatable("tooltip.redstonelapismod.rocket_boots.jump")
+        tooltip.add(Component.translatable("tooltip.redstonelapismod.rocket_boots.charge")
                 .withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.translatable("tooltip.redstonelapismod.rocket_boots.thrust")
+        tooltip.add(Component.translatable("tooltip.redstonelapismod.rocket_boots.modes")
                 .withStyle(ChatFormatting.GRAY));
         super.appendHoverText(stack, context, tooltip, flag); // battery status lines
     }

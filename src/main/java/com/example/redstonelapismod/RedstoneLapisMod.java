@@ -130,9 +130,8 @@ public class RedstoneLapisMod {
         NeoForge.EVENT_BUS.addListener(HeadtorchHandler::onPlayerTick);
         NeoForge.EVENT_BUS.addListener(HeadtorchHandler::onPlayerLogout);
 
-        // Rocket boots: thrust ticking, fall-damage grace, state cleanup.
-        // (The jump/thrust payloads arrive via network/ModNetworking.)
-        NeoForge.EVENT_BUS.addListener(RocketBootsHandler::onPlayerTick);
+        // Rocket boots: fall-damage grace + state cleanup.
+        // (The charged-blast payload arrives via network/ModNetworking.)
         NeoForge.EVENT_BUS.addListener(RocketBootsHandler::onLivingFall);
         NeoForge.EVENT_BUS.addListener(RocketBootsHandler::onPlayerLogout);
 

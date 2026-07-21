@@ -26,17 +26,10 @@ public final class ModNetworking {
 
         // Handlers run on the server MAIN thread by default (HandlerThread.MAIN),
         // so touching the player directly is safe — no enqueueWork needed.
-        registrar.playToServer(RocketJumpPayload.TYPE, RocketJumpPayload.STREAM_CODEC,
+        registrar.playToServer(RocketBlastPayload.TYPE, RocketBlastPayload.STREAM_CODEC,
                 (payload, context) -> {
                     if (context.player() instanceof ServerPlayer player) {
-                        RocketBootsHandler.handleJump(player);
-                    }
-                });
-
-        registrar.playToServer(RocketThrustPayload.TYPE, RocketThrustPayload.STREAM_CODEC,
-                (payload, context) -> {
-                    if (context.player() instanceof ServerPlayer player) {
-                        RocketBootsHandler.handleThrust(player, payload.thrusting());
+                        RocketBootsHandler.handleBlast(player, payload.chargeFraction(), payload.gliding());
                     }
                 });
     }

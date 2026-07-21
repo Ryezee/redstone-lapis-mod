@@ -2,11 +2,16 @@ package com.example.redstonelapismod.client;
 
 import com.example.redstonelapismod.RedstoneLapisMod;
 import com.example.redstonelapismod.RocketBootsHandler;
-import com.example.redstonelapismod.network.RocketJumpPayload;
-import com.example.redstonelapismod.network.RocketThrustPayload;
+import com.example.redstonelapismod.network.RocketBlastPayload;
 
+import com.mojang.blaze3d.platform.InputConstants;
+
+import org.joml.Vector3f;
+
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
@@ -16,114 +21,153 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
- * Client half of the Redstone Rocket Boots: reads the vanilla JUMP key (no new
- * keybind — a fresh press in mid-air is the rocket jump, holding it while
- * elytra-gliding is thrust) and applies the motion LOCALLY, instantly.
+ * Client half of the Redstone Rocket Boots: the hold-to-charge machine.
  *
- * Why local: player movement is client-authoritative — this machine simulates
- * the player and reports positions; waiting for the server to push velocity
- * back would add a perceptible round-trip on a feel-critical key. So we move
- * first and notify the server (payloads in the network package), which bills
- * the battery, validates, and shows the effects to everyone else. A vanilla
- * firework boosts gliders the same both-sides way.
+ * Hold the vanilla JUMP key while wearing powered boots to charge a redstone
+ * blast; release to fire. Gliding on an elytra -> the blast punches you
+ * FORWARD (one big firework-style kick); otherwise -> straight UP. Held less
+ * than the minimum (0.5 s) -> fizzle, no blast, no cost.
  *
- * Input subtlety, handled by ordering: pressing jump while falling is ALSO how
- * vanilla deploys an elytra. Vanilla processes input before this handler runs
- * (ClientTickEvent.Post), so a deploy-press has already set isFallFlying by
- * the time we look — that press routes to "thrust if held", never to a rocket
- * jump. Releasing and pressing again mid-glide stays thrust; rocket jumps
- * only ever fire when NOT gliding.
+ * The launch velocity is applied HERE, instantly on release — player movement
+ * is client-authoritative and a network round-trip on a movement key feels
+ * laggy — then {@code RocketBlastPayload} tells the server, which bills the
+ * battery and detonates the effects for everyone.
+ *
+ * Input plumbing subtlety: holding space on the ground normally makes the
+ * player bunny-hop. While charging on the ground we force the jump KeyMapping
+ * to "released" every tick BEFORE vanilla samples input (ClientTickEvent.Pre),
+ * so you plant your feet and charge instead of hopping. Because that lies to
+ * {@code isDown()}, the charge machine reads the PHYSICAL key state straight
+ * from the keyboard (GLFW) instead.
  */
 @EventBusSubscriber(modid = RedstoneLapisMod.MODID, value = Dist.CLIENT)
 public final class RocketBootsClientHandler {
 
-    /**
-     * Initial upward velocity of a rocket jump, SET (not added) like vanilla's
-     * own jumpFromGround. 1.34 -> apex ~9.96 blocks under gravity 0.08/tick and
-     * 0.98 drag; kept a hair under 10 so an unprotected flat-ground return is
-     * 7 damage, not 8 (SAFE_FALL_DISTANCE 3 + ceil).
-     */
-    private static final double JUMP_VELOCITY = 1.34;
-    /** Client-side echo of the server's jump cooldown (ticks). */
-    private static final int JUMP_COOLDOWN_TICKS = 10;
+    /** Small red mote sprinkled while charging (client-local; the blast itself is server-broadcast). */
+    private static final DustParticleOptions CHARGE_DUST =
+            new DustParticleOptions(new Vector3f(1.0f, 0.25f, 0.1f), 0.5f);
 
-    /** Previous tick's jump-key state, for fresh-press edge detection. */
-    private static boolean prevJumpDown;
-    /** Whether we currently believe we're thrusting (mirrors what we told the server). */
-    private static boolean thrusting;
-    /** Client tick of the last rocket jump we fired. */
-    private static long lastJumpTick = Long.MIN_VALUE;
-    private static long ticks;
+    /** Ticks the jump key has been held for the current charge; 0 = not charging. */
+    private static int chargeTicks;
+    /** Physical key state last tick, for fresh-press edge detection. */
+    private static boolean prevRawDown;
 
     private RocketBootsClientHandler() {}
 
+    /** Charge progress 0..1 for the HUD (0 while not charging). */
+    public static float chargeFraction() {
+        return Math.min(1.0f, (float) chargeTicks / RocketBootsHandler.CHARGE_FULL_TICKS);
+    }
+
+    // ------------------------------------------------------------------
+    // Pre-tick: suppress the vanilla hop BEFORE input is sampled this tick.
+    // ------------------------------------------------------------------
+
     @SubscribeEvent
-    static void onClientTick(ClientTickEvent.Post event) {
-        ticks++;
+    static void onClientTickPre(ClientTickEvent.Pre event) {
         Minecraft mc = Minecraft.getInstance();
-        LocalPlayer player = mc.player;
-        if (player == null) {
-            // Left the world: forget everything; the server clears its side on logout.
-            prevJumpDown = false;
-            thrusting = false;
-            return;
-        }
-
-        // Fresh-press edge detector on the VANILLA jump key. isDown() is already
-        // false while a GUI/screen is open, so menu presses can't leak in here.
-        boolean down = mc.options.keyJump.isDown();
-        boolean freshPress = down && !prevJumpDown;
-        prevJumpDown = down;
-
-        boolean wearingPowered = GogglesClient.isWearingPowered(player,
-                RedstoneLapisMod.REDSTONE_ROCKET_BOOTS.get(), EquipmentSlot.FEET);
-
-        // --- Thrust state machine: hold jump while gliding -> continuous thrust.
-        boolean shouldThrust = down && player.isFallFlying() && wearingPowered
-                && !player.isSpectator();
-        if (shouldThrust != thrusting) {
-            thrusting = shouldThrust;
-            // Tell the server only on CHANGE; it ticks the flag on its side.
-            PacketDistributor.sendToServer(new RocketThrustPayload(thrusting));
-        }
-        if (thrusting) {
-            applyThrustTick(player);
-            return; // a tick spent thrusting is never also a rocket jump
-        }
-
-        // --- Rocket jump: a fresh mid-air press while NOT gliding.
-        if (freshPress && wearingPowered
-                && !player.onGround()          // mid-air only: that's the "double" in double-jump
-                && !player.isFallFlying()      // gliding presses belong to thrust above
-                && !player.isInWater() && !player.isInLava()
-                && !player.getAbilities().flying // creative flight has its own physics
-                && !player.isSpectator() && !player.isPassenger()
-                && ticks - lastJumpTick >= JUMP_COOLDOWN_TICKS) {
-            lastJumpTick = ticks;
-            // Move NOW (zero latency), preserving horizontal momentum...
-            Vec3 dm = player.getDeltaMovement();
-            player.setDeltaMovement(dm.x, JUMP_VELOCITY, dm.z);
-            // ...then tell the server, which bills the battery and shows the
-            // launch to everyone. If it disagrees (charge raced to 0), our hop
-            // was a harmless client-only misprediction.
-            PacketDistributor.sendToServer(RocketJumpPayload.INSTANCE);
+        if (chargeTicks > 0 && mc.player != null && mc.player.onGround()) {
+            mc.options.keyJump.setDown(false); // vanilla sees "released" -> no bunny-hop while charging
         }
     }
 
-    /**
-     * Same per-tick acceleration the server mirrors (constants shared from
-     * RocketBootsHandler): the vanilla firework curve with a higher target
-     * speed. Applied here because THIS simulation is the one that moves us.
-     */
-    private static void applyThrustTick(LocalPlayer player) {
-        Vec3 look = player.getLookAngle();
+    // ------------------------------------------------------------------
+    // Post-tick: the charge state machine.
+    // ------------------------------------------------------------------
+
+    @SubscribeEvent
+    static void onClientTickPost(ClientTickEvent.Post event) {
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer player = mc.player;
+        if (player == null) {
+            chargeTicks = 0;
+            prevRawDown = false;
+            return; // left the world; server clears its side on logout
+        }
+
+        boolean rawDown = isJumpPhysicallyDown(mc);
+        boolean freshPress = rawDown && !prevRawDown;
+        prevRawDown = rawDown;
+
+        boolean valid = mc.screen == null // no charging (or firing) from inside menus
+                && GogglesClient.isWearingPowered(player,
+                        RedstoneLapisMod.REDSTONE_ROCKET_BOOTS.get(), EquipmentSlot.FEET)
+                && !player.isSpectator() && !player.isPassenger()
+                && !player.isInWater() && !player.getAbilities().flying;
+
+        if (chargeTicks == 0) {
+            // Idle -> a FRESH press while valid starts a charge. (Fresh, so holding
+            // space from before equipping the boots doesn't spontaneously charge.)
+            if (freshPress && valid) {
+                chargeTicks = 1;
+            }
+            return;
+        }
+
+        // --- Currently charging. ---
+        if (!valid) {
+            chargeTicks = 0; // boots off / menu opened / water... : cancel silently
+            return;
+        }
+        if (rawDown) {
+            chargeTicks = Math.min(chargeTicks + 1, RocketBootsHandler.CHARGE_FULL_TICKS);
+            chargeParticles(player);
+            return;
+        }
+
+        // --- Key released: fire or fizzle. ---
+        int held = chargeTicks;
+        chargeTicks = 0;
+        if (held < RocketBootsHandler.CHARGE_MIN_TICKS) {
+            return; // fizzle: too short, no blast, no cost
+        }
+        float f = Math.min(1.0f, (float) held / RocketBootsHandler.CHARGE_FULL_TICKS);
+        boolean gliding = player.isFallFlying();
+
+        // Launch NOW (zero latency)...
         Vec3 dm = player.getDeltaMovement();
-        player.setDeltaMovement(dm.add(
-                look.x * RocketBootsHandler.THRUST_ADDITIVE
-                        + (look.x * RocketBootsHandler.THRUST_TARGET_SPEED - dm.x) * RocketBootsHandler.THRUST_PULL,
-                look.y * RocketBootsHandler.THRUST_ADDITIVE
-                        + (look.y * RocketBootsHandler.THRUST_TARGET_SPEED - dm.y) * RocketBootsHandler.THRUST_PULL,
-                look.z * RocketBootsHandler.THRUST_ADDITIVE
-                        + (look.z * RocketBootsHandler.THRUST_TARGET_SPEED - dm.z) * RocketBootsHandler.THRUST_PULL));
+        if (gliding) {
+            // Forward punch along the gaze, like one big firework blast.
+            player.setDeltaMovement(player.getLookAngle()
+                    .scale(RocketBootsHandler.GLIDE_BLAST_SPEED * f));
+        } else {
+            // Straight up; horizontal momentum preserved. sqrt: apex height goes
+            // with velocity SQUARED, so this makes height scale linearly with charge.
+            player.setDeltaMovement(dm.x,
+                    RocketBootsHandler.VERTICAL_BLAST_VELOCITY * Math.sqrt(f), dm.z);
+        }
+
+        // ...then report; the server bills, grants fall grace, and detonates
+        // the sound/particles for everyone (a mis-predicted blast is a harmless
+        // client-only hop the server simply doesn't bill or broadcast).
+        PacketDistributor.sendToServer(new RocketBlastPayload(f, gliding));
+    }
+
+    /**
+     * Physical keyboard state of the jump binding, bypassing KeyMapping's
+     * bookkeeping (which our Pre-tick suppression deliberately falsifies).
+     * Falls back to isDown() for non-keyboard bindings (e.g. mouse buttons).
+     */
+    private static boolean isJumpPhysicallyDown(Minecraft mc) {
+        KeyMapping jump = mc.options.keyJump;
+        InputConstants.Key key = jump.getKey();
+        if (key.getType() == InputConstants.Type.KEYSYM) {
+            return InputConstants.isKeyDown(mc.getWindow().getWindow(), key.getValue());
+        }
+        return jump.isDown();
+    }
+
+    /** Rising sparkle at the feet while charging — feedback you can feel. */
+    private static void chargeParticles(LocalPlayer player) {
+        // Every 4 ticks early on, every 2 near full: the crackle accelerates.
+        int interval = chargeTicks >= RocketBootsHandler.CHARGE_FULL_TICKS ? 2 : 4;
+        if (player.tickCount % interval == 0) {
+            double angle = player.getRandom().nextDouble() * Math.PI * 2.0;
+            player.level().addParticle(CHARGE_DUST,
+                    player.getX() + Math.cos(angle) * 0.4,
+                    player.getY() + 0.05,
+                    player.getZ() + Math.sin(angle) * 0.4,
+                    0.0, 0.05, 0.0);
+        }
     }
 }
