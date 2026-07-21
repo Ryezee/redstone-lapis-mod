@@ -33,12 +33,14 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * laggy — then {@code RocketBlastPayload} tells the server, which bills the
  * battery and detonates the effects for everyone.
  *
- * Input plumbing subtlety: holding space on the ground normally makes the
- * player bunny-hop. While charging on the ground we force the jump KeyMapping
- * to "released" every tick BEFORE vanilla samples input (ClientTickEvent.Pre),
- * so you plant your feet and charge instead of hopping. Because that lies to
- * {@code isDown()}, the charge machine reads the PHYSICAL key state straight
- * from the keyboard (GLFW) instead.
+ * Input plumbing subtlety: on the ground, charging requires SNEAK + jump —
+ * plain space is always a normal instant jump (tap-vs-hold is unknowable at
+ * press time, so grounded charging needs its own gesture). Mid-air, any jump
+ * hold charges. The whole state machine runs in ClientTickEvent.Pre — BEFORE
+ * vanilla samples input each tick — so the press that starts a charge is
+ * suppressed the same tick it lands and never causes a hop. Because the
+ * suppression lies to {@code isDown()}, the machine reads the PHYSICAL key
+ * state straight from the keyboard (GLFW) instead.
  */
 @EventBusSubscriber(modid = RedstoneLapisMod.MODID, value = Dist.CLIENT)
 public final class RocketBootsClientHandler {
@@ -60,23 +62,13 @@ public final class RocketBootsClientHandler {
     }
 
     // ------------------------------------------------------------------
-    // Pre-tick: suppress the vanilla hop BEFORE input is sampled this tick.
+    // Pre-tick: the ENTIRE charge state machine. It must run in Pre — before
+    // vanilla samples input this tick — or the first press of a charge reaches
+    // vanilla and the player hops before charging starts (the v2.0 race).
     // ------------------------------------------------------------------
 
     @SubscribeEvent
     static void onClientTickPre(ClientTickEvent.Pre event) {
-        Minecraft mc = Minecraft.getInstance();
-        if (chargeTicks > 0 && mc.player != null && mc.player.onGround()) {
-            mc.options.keyJump.setDown(false); // vanilla sees "released" -> no bunny-hop while charging
-        }
-    }
-
-    // ------------------------------------------------------------------
-    // Post-tick: the charge state machine.
-    // ------------------------------------------------------------------
-
-    @SubscribeEvent
-    static void onClientTickPost(ClientTickEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         if (player == null) {
@@ -96,10 +88,15 @@ public final class RocketBootsClientHandler {
                 && !player.isInWater() && !player.getAbilities().flying;
 
         if (chargeTicks == 0) {
-            // Idle -> a FRESH press while valid starts a charge. (Fresh, so holding
-            // space from before equipping the boots doesn't spontaneously charge.)
-            if (freshPress && valid) {
+            // Idle -> a FRESH press while valid starts a charge — but on the
+            // ground only while SNEAKING, so plain space stays a normal jump.
+            // Mid-air there is no jump to protect, so any hold charges.
+            // (Fresh, so holding space from before equipping the boots doesn't
+            // spontaneously charge.)
+            boolean gateOpen = !player.onGround() || player.isShiftKeyDown();
+            if (freshPress && valid && gateOpen) {
                 chargeTicks = 1;
+                suppressGroundJump(mc, player); // same tick: vanilla never sees the press
             }
             return;
         }
@@ -112,6 +109,7 @@ public final class RocketBootsClientHandler {
         if (rawDown) {
             chargeTicks = Math.min(chargeTicks + 1, RocketBootsHandler.CHARGE_FULL_TICKS);
             chargeParticles(player);
+            suppressGroundJump(mc, player);
             return;
         }
 
@@ -141,6 +139,18 @@ public final class RocketBootsClientHandler {
         // the sound/particles for everyone (a mis-predicted blast is a harmless
         // client-only hop the server simply doesn't bill or broadcast).
         PacketDistributor.sendToServer(new RocketBlastPayload(f, gliding));
+    }
+
+    /**
+     * While charging on the ground, force the jump KeyMapping to "released"
+     * so vanilla's input sampling (which runs after Pre) never sees it — no
+     * bunny-hop, no sneak-jump. Mid-air the key is left alone so an elytra
+     * can still deploy on the same held press.
+     */
+    private static void suppressGroundJump(Minecraft mc, LocalPlayer player) {
+        if (player.onGround()) {
+            mc.options.keyJump.setDown(false);
+        }
     }
 
     /**
