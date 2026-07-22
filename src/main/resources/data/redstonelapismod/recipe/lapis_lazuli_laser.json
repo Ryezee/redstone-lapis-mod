@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    " C ",
+    "DBD",
+    " C "
+  ],
+  "key": {
+    "C": {
+      "item": "redstonelapismod:concentrated_lapis_lazuli"
+    },
+    "D": {
+      "item": "minecraft:diamond"
+    },
+    "B": {
+      "item": "minecraft:lapis_block"
+    }
+  },
+  "result": {
+    "id": "redstonelapismod:lapis_lazuli_laser",
+    "count": 1
+  }
+}
