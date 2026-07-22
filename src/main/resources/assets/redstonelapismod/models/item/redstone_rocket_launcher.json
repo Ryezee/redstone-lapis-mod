@@ -20,14 +20,14 @@
       "scale": [0.7, 0.7, 0.7]
     },
     "thirdperson_righthand": {
-      "rotation": [-10, 0, 0],
-      "translation": [0, 2.5, 1],
-      "scale": [0.75, 0.75, 0.75]
+      "rotation": [-85, 0, 0],
+      "translation": [0, 3.5, 1.5],
+      "scale": [0.7, 0.7, 0.7]
     },
     "thirdperson_lefthand": {
-      "rotation": [-10, 0, 0],
-      "translation": [0, 2.5, 1],
-      "scale": [0.75, 0.75, 0.75]
+      "rotation": [-85, 0, 0],
+      "translation": [0, 3.5, 1.5],
+      "scale": [0.7, 0.7, 0.7]
     },
     "firstperson_righthand": {
       "rotation": [0, -4, 0],
