@@ -1,6 +1,43 @@
 {
-  "parent": "minecraft:item/handheld",
+  "parent": "minecraft:builtin/entity",
   "textures": {
-    "layer0": "redstonelapismod:item/redstone_rocket_launcher"
+    "particle": "redstonelapismod:item/redstone_rocket_launcher"
+  },
+  "display": {
+    "gui": {
+      "rotation": [30, 225, 0],
+      "translation": [0, 0, 0],
+      "scale": [0.62, 0.62, 0.62]
+    },
+    "ground": {
+      "rotation": [0, 0, 0],
+      "translation": [0, 3, 0],
+      "scale": [0.4, 0.4, 0.4]
+    },
+    "fixed": {
+      "rotation": [0, 90, 0],
+      "translation": [0, 0, 0],
+      "scale": [0.7, 0.7, 0.7]
+    },
+    "thirdperson_righthand": {
+      "rotation": [-10, 0, 0],
+      "translation": [0, 2.5, 1],
+      "scale": [0.75, 0.75, 0.75]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [-10, 0, 0],
+      "translation": [0, 2.5, 1],
+      "scale": [0.75, 0.75, 0.75]
+    },
+    "firstperson_righthand": {
+      "rotation": [0, -4, 0],
+      "translation": [1.6, 1.2, 1],
+      "scale": [0.68, 0.68, 0.68]
+    },
+    "firstperson_lefthand": {
+      "rotation": [0, 4, 0],
+      "translation": [-1.6, 1.2, 1],
+      "scale": [0.68, 0.68, 0.68]
+    }
   }
 }
