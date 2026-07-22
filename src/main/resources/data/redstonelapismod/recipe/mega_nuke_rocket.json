@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "redstonelapismod:mega_redstone_rocket"
+    },
+    {
+      "item": "redstonelapismod:redstone_nuclear_warhead"
+    }
+  ],
+  "result": {
+    "id": "redstonelapismod:mega_nuke_rocket",
+    "count": 1
+  }
+}

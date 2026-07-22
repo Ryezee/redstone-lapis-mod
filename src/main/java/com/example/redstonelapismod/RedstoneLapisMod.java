@@ -141,6 +141,14 @@ public class RedstoneLapisMod {
     public static final DeferredItem<Item> MEGA_REDSTONE_ROCKET = ITEMS.register("mega_redstone_rocket",
             () -> new MegaRedstoneRocketItem(new Item.Properties().stacksTo(16)));
 
+    // Redstone Nuclear Warhead — crafting component for the Mega Nuke Rocket.
+    public static final DeferredItem<Item> REDSTONE_NUCLEAR_WARHEAD = ITEMS.register("redstone_nuclear_warhead",
+            () -> new Item(new Item.Properties().stacksTo(16)));
+
+    // Redstone Mega Nuke Rocket — warhead-tipped shell: crater blast + mushroom cloud.
+    public static final DeferredItem<Item> MEGA_NUKE_ROCKET = ITEMS.register("mega_nuke_rocket",
+            () -> new MegaNukeRocketItem(new Item.Properties().stacksTo(4).rarity(Rarity.UNCOMMON)));
+
     // Lapis Lazuli Laser — railgun round: straight beam, transmutes blocks to lapis.
     // Rarity.RARE aqua name, matching its Concentrated Lapis pedigree.
     public static final DeferredItem<Item> LAPIS_LAZULI_LASER = ITEMS.register("lapis_lazuli_laser",
@@ -212,11 +220,13 @@ public class RedstoneLapisMod {
             event.accept(REDSTONE_ROCKET_LAUNCHER);
             event.accept(REDSTONE_ROCKET);
             event.accept(MEGA_REDSTONE_ROCKET);
+            event.accept(MEGA_NUKE_ROCKET);
             event.accept(LAPIS_LAZULI_LASER);
         }
         if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
             event.accept(REDSTONE_GOGGLE_LENS);
             event.accept(REDSTONE_POWERED_GEM);
+            event.accept(REDSTONE_NUCLEAR_WARHEAD);
             event.accept(LAPIS_POWERED_GEM);
         }
     }
