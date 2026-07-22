@@ -137,7 +137,16 @@ public class RedstoneLapisMod {
     public static final DeferredItem<Item> REDSTONE_ROCKET = ITEMS.register("redstone_rocket",
             () -> new RedstoneRocketItem(new Item.Properties().stacksTo(16)));
 
-    // Redstone Rocket Launcher — fires rockets as a concussive, block-safe blast.
+    // Mega Redstone Rocket — TNT-plus blast with real block damage.
+    public static final DeferredItem<Item> MEGA_REDSTONE_ROCKET = ITEMS.register("mega_redstone_rocket",
+            () -> new MegaRedstoneRocketItem(new Item.Properties().stacksTo(16)));
+
+    // Lapis Lazuli Laser — railgun round: straight beam, transmutes blocks to lapis.
+    // Rarity.RARE aqua name, matching its Concentrated Lapis pedigree.
+    public static final DeferredItem<Item> LAPIS_LAZULI_LASER = ITEMS.register("lapis_lazuli_laser",
+            () -> new LapisLaserItem(new Item.Properties().stacksTo(16).rarity(Rarity.RARE)));
+
+    // Redstone Rocket Launcher — dumb tube; damage and effects come from the ammo.
     public static final DeferredItem<Item> REDSTONE_ROCKET_LAUNCHER = ITEMS.register("redstone_rocket_launcher",
             () -> new RedstoneRocketLauncherItem(new Item.Properties().stacksTo(1)));
 
@@ -202,6 +211,8 @@ public class RedstoneLapisMod {
         if (event.getTabKey() == CreativeModeTabs.COMBAT) {
             event.accept(REDSTONE_ROCKET_LAUNCHER);
             event.accept(REDSTONE_ROCKET);
+            event.accept(MEGA_REDSTONE_ROCKET);
+            event.accept(LAPIS_LAZULI_LASER);
         }
         if (event.getTabKey() == CreativeModeTabs.INGREDIENTS) {
             event.accept(REDSTONE_GOGGLE_LENS);
