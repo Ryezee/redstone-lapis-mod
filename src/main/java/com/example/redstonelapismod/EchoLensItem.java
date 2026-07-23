@@ -30,8 +30,8 @@ public class EchoLensItem extends LapisGadgetItem {
 
     /** Lapis charge per scan (user spec). */
     public static final int SCAN_COST = 10;
-    /** How far the pulse reaches, in blocks (user spec). */
-    public static final double SCAN_RADIUS = 10.0;
+    /** How far the pulse reaches, in blocks (user spec; doubled 2026-07-22). */
+    public static final double SCAN_RADIUS = 20.0;
     /** Re-ping cooldown, in ticks (3 s) — vanilla blocks use() while it runs. */
     public static final int COOLDOWN_TICKS = 60;
 

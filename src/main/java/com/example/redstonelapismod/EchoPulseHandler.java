@@ -35,8 +35,9 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
  */
 public final class EchoPulseHandler {
 
-    /** Ticks for the pulse to reach full radius (20 = 1 s, half a block per tick). */
-    private static final int PULSE_TICKS = 20;
+    /** Ticks for the pulse to reach full radius (40 = 2 s, half a block per tick —
+     *  radius doubled with the wavefront speed kept, so the sweep feel is unchanged). */
+    private static final int PULSE_TICKS = 40;
     /** How long revealed mobs stay outlined (80 = 4 s). */
     private static final int GLOW_TICKS = 80;
 

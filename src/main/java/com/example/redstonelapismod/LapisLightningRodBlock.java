@@ -20,18 +20,20 @@ import org.joml.Vector3f;
 /**
  * Lapis Lightning Rod — this mod's first Block. Inherits ALL copper-rod
  * behavior from vanilla (wall/floor placement, waterlogging, redstone pulse
- * on strike, powered blockstate) and adds two things:
+ * on strike, powered blockstate) and adds:
  *
- * 1. "Extremely attractive to lightning": rather than waiting for vanilla's
- *    chunk lottery, the rod SUMMONS its own strikes — during a thunderstorm
- *    with open sky above, each random tick (avg ~1/minute at default speed)
- *    spawns a real lightning bolt on itself.
+ * 1. "Extremely attractive to lightning": a self-rescheduling strike timer.
+ *    Placement schedules a tick; every tick re-schedules the next one
+ *    8-20 seconds out, and if a thunderstorm is overhead the rod summons a
+ *    real lightning bolt on itself. Random ticks act only as a backstop that
+ *    restarts a lost timer (e.g. rods placed before this version).
  * 2. A LUCK ENGINE decides each strike's payout. One uniform roll picks the
- *    tier: 1% dud (no XP, a sad fizzle), 1% jackpot (100-200 XP and a
- *    comically large — but completely harmless — celebration blast), and the
- *    remaining 98% ride a square-law curve: small payouts common, big ones
- *    rare, with particle count, chime volume, and pitch all scaling with the
- *    same luck value so a lucky strike LOOKS and SOUNDS lucky.
+ *    tier: 1% dud (no XP, a sad fizzle), 1% jackpot (100-200 XP as a fountain
+ *    of dozens of orbs plus a comically large — but completely harmless —
+ *    celebration blast), and the remaining 98% ride a square-law curve:
+ *    small payouts common, big ones rare, with orb count, particle count,
+ *    chime volume, and pitch all scaling with the same luck value.
+ *    XP is thrown as individual scattering orbs, not a merged award.
  *
  * Wiring note: the vanilla bolt entity only notifies blocks that are
  * literally minecraft:lightning_rod, so our summoned strike calls
@@ -39,6 +41,12 @@ import org.joml.Vector3f;
  * overridden here to add the payout on top of the redstone pulse.
  */
 public class LapisLightningRodBlock extends LightningRodBlock {
+
+    // ---- Strike timer: every tick reschedules itself this far out ----
+    /** Minimum delay between strike checks, in ticks (160 = 8 s). */
+    private static final int STRIKE_DELAY_MIN = 160;
+    /** Random extra delay, in ticks (up to +240 = 12 s; average interval ~14 s). */
+    private static final int STRIKE_DELAY_SPREAD = 240;
 
     // ---- Tier odds: one nextFloat() roll per strike, read against these bands ----
     /** 1% of strikes yield nothing at all. */
@@ -54,11 +62,16 @@ public class LapisLightningRodBlock extends LightningRodBlock {
     /** Dust mote count also rides the luck curve, between these bounds. */
     private static final int MIN_MOTES = 8;
     private static final int MAX_MOTES = 120;
+    /** Orb count for a normal strike: MIN_ORBS + luck * (MAX_ORBS - MIN_ORBS). */
+    private static final int MIN_ORBS = 2;
+    private static final int MAX_ORBS = 12;
 
     // ---- Jackpot tier ----
     /** Jackpot pays JACKPOT_XP_MIN + nextInt(JACKPOT_XP_SPREAD): 100-200 XP. */
     private static final int JACKPOT_XP_MIN = 100;
     private static final int JACKPOT_XP_SPREAD = 101;
+    /** ...split across this many orbs, launched hard in every direction. */
+    private static final int JACKPOT_ORBS = 60;
 
     /** Lapis nova on a normal strike: oversized deep-blue dust. */
     private static final DustParticleOptions LAPIS_BURST =
@@ -72,18 +85,54 @@ public class LapisLightningRodBlock extends LightningRodBlock {
         super(properties);
     }
 
-    /** Requires the .randomTicks() block property — set at registration. */
+    /** Fresh placement starts the strike timer. */
+    @Override
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+        super.onPlace(state, level, pos, oldState, movedByPiston);
+        if (!state.is(oldState.getBlock()) && !level.isClientSide) {
+            scheduleNextCheck(level, pos, level.random);
+        }
+    }
+
+    private void scheduleNextCheck(Level level, BlockPos pos, RandomSource random) {
+        level.scheduleTick(pos, this, STRIKE_DELAY_MIN + random.nextInt(STRIKE_DELAY_SPREAD));
+    }
+
+    /**
+     * Two callers share this hook: vanilla schedules a +8-tick "un-power" after
+     * a strike (handled by super), and our own timer chain arrives while the
+     * rod is unpowered. The two never coincide — our shortest delay (160) is
+     * far beyond the 8-tick powered window, and vanilla lightning never
+     * targets modded rods — so the POWERED flag cleanly tells them apart.
+     */
+    @Override
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (state.getValue(POWERED)) {
+            super.tick(state, level, pos, random); // the un-power pulse ending
+            return;
+        }
+        if (level.isThundering() && level.canSeeSky(pos.above())) {
+            summonStrike(state, level, pos);
+        }
+        scheduleNextCheck(level, pos, random); // always keep the timer alive
+    }
+
+    /** Backstop only: restarts a lost timer (pre-update rods, piston moves). */
     @Override
     protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
-        if (!level.isThundering() || !level.canSeeSky(pos.above())) {
-            return; // storms only, and the sky must actually reach the rod
+        if (!level.getBlockTicks().hasScheduledTick(pos, this)) {
+            scheduleNextCheck(level, pos, random);
         }
+    }
+
+    /** Spawns a REAL lightning bolt (thunder, flash, fire risk) and notifies ourselves. */
+    private void summonStrike(BlockState state, ServerLevel level, BlockPos pos) {
         LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(level);
         if (bolt == null) {
             return;
         }
         bolt.moveTo(Vec3.atBottomCenterOf(pos.above()));
-        level.addFreshEntity(bolt); // a REAL strike: thunder, flash, fire risk nearby
+        level.addFreshEntity(bolt);
         onLightningStrike(state, level, pos);
     }
 
@@ -116,7 +165,8 @@ public class LapisLightningRodBlock extends LightningRodBlock {
         luck = luck * luck;
 
         int xp = MIN_XP + Math.round(luck * (MAX_XP - MIN_XP));
-        ExperienceOrb.award(level, top, xp);
+        int orbs = MIN_ORBS + (int) (luck * (MAX_ORBS - MIN_ORBS));
+        burstOrbs(level, top, xp, orbs, 0.25F + luck * 0.35F, random);
 
         int motes = MIN_MOTES + (int) (luck * (MAX_MOTES - MIN_MOTES));
         level.sendParticles(LAPIS_BURST, top.x, top.y, top.z, motes, 0.4, 0.6, 0.4, 0.0);
@@ -133,9 +183,10 @@ public class LapisLightningRodBlock extends LightningRodBlock {
         }
     }
 
-    /** 1% tier: 100-200 XP and a huge celebration blast — zero damage of any kind. */
+    /** 1% tier: 100-200 XP fountained as dozens of orbs, plus a huge harmless blast. */
     private static void strikeJackpot(ServerLevel level, BlockPos pos, Vec3 top, RandomSource random) {
-        ExperienceOrb.award(level, top, JACKPOT_XP_MIN + random.nextInt(JACKPOT_XP_SPREAD));
+        int xp = JACKPOT_XP_MIN + random.nextInt(JACKPOT_XP_SPREAD);
+        burstOrbs(level, top, xp, JACKPOT_ORBS, 0.9F, random);
 
         // Purely audiovisual explosion — no Level.explode, so nothing is hurt.
         // Each EXPLOSION_EMITTER blooms into ~100 blast puffs; stack a column of three.
@@ -159,5 +210,27 @@ public class LapisLightningRodBlock extends LightningRodBlock {
     private static void strikeDud(ServerLevel level, BlockPos pos, Vec3 top) {
         level.sendParticles(ParticleTypes.SMOKE, top.x, top.y, top.z, 6, 0.1, 0.2, 0.1, 0.01);
         level.playSound(null, pos, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 0.5F, 0.8F);
+    }
+
+    /**
+     * Throws totalXp as individual scattering orb entities instead of
+     * ExperienceOrb.award's merged lump — visible, physical, pick-up-able.
+     * Integer division against the REMAINING orb count splits the total
+     * evenly with no XP lost and no zero-value orbs.
+     */
+    private static void burstOrbs(ServerLevel level, Vec3 top, int totalXp, int orbCount,
+            float speed, RandomSource random) {
+        int orbs = Math.min(orbCount, totalXp); // never more orbs than XP points
+        int remaining = totalXp;
+        for (int i = 0; i < orbs; i++) {
+            int share = remaining / (orbs - i);
+            remaining -= share;
+            ExperienceOrb orb = new ExperienceOrb(level, top.x, top.y, top.z, share);
+            orb.setDeltaMovement(
+                    (random.nextDouble() - 0.5) * speed,
+                    0.15 + random.nextDouble() * speed * 0.6,
+                    (random.nextDouble() - 0.5) * speed);
+            level.addFreshEntity(orb);
+        }
     }
 }
