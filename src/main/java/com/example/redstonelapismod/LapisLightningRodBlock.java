@@ -23,10 +23,13 @@ import org.joml.Vector3f;
  * on strike, powered blockstate) and adds:
  *
  * 1. "Extremely attractive to lightning": a self-rescheduling strike timer.
- *    Placement schedules a tick; every tick re-schedules the next one
- *    8-20 seconds out, and if a thunderstorm is overhead the rod summons a
- *    real lightning bolt on itself. Random ticks act only as a backstop that
- *    restarts a lost timer (e.g. rods placed before this version).
+ *    Placement schedules a tick; the chain re-schedules itself 8-20 seconds
+ *    out, and if a thunderstorm is overhead the rod summons a real lightning
+ *    bolt on itself. After every strike there is a 35% FLURRY chance that the
+ *    next bolt lands only ~1-2 s later — and flurries re-roll, so a very
+ *    conductive rod sometimes gets hammered over and over. Random ticks act
+ *    only as a backstop that restarts a lost timer (e.g. rods placed before
+ *    this version).
  * 2. A LUCK ENGINE decides each strike's payout. One uniform roll picks the
  *    tier: 1% dud (no XP, a sad fizzle), 1% jackpot (100-200 XP as a fountain
  *    of dozens of orbs plus a comically large — but completely harmless —
@@ -47,6 +50,15 @@ public class LapisLightningRodBlock extends LightningRodBlock {
     private static final int STRIKE_DELAY_MIN = 160;
     /** Random extra delay, in ticks (up to +240 = 12 s; average interval ~14 s). */
     private static final int STRIKE_DELAY_SPREAD = 240;
+
+    // ---- Flurries: chance that a strike is followed by another almost immediately ----
+    /** Rolled after EVERY strike; successes chain, so flurry length is geometric:
+     *  35% of strikes get a quick echo, 12% become 3+, ~4% become 4+. */
+    private static final float FLURRY_CHANCE = 0.35F;
+    /** Quick-echo delay, in ticks past the un-power tick (10 + up to 24 → next
+     *  bolt lands ~1-2 s after the previous one). */
+    private static final int FLURRY_DELAY_MIN = 10;
+    private static final int FLURRY_DELAY_SPREAD = 25;
 
     // ---- Tier odds: one nextFloat() roll per strike, read against these bands ----
     /** 1% of strikes yield nothing at all. */
@@ -99,22 +111,41 @@ public class LapisLightningRodBlock extends LightningRodBlock {
     }
 
     /**
-     * Two callers share this hook: vanilla schedules a +8-tick "un-power" after
-     * a strike (handled by super), and our own timer chain arrives while the
-     * rod is unpowered. The two never coincide — our shortest delay (160) is
-     * far beyond the 8-tick powered window, and vanilla lightning never
-     * targets modded rods — so the POWERED flag cleanly tells them apart.
+     * Two callers share this hook, told apart by the POWERED flag: vanilla
+     * schedules a +8-tick "un-power" after a strike (arrives powered), and our
+     * own timer chain (arrives unpowered — every delay we use exceeds the
+     * 8-tick powered window, and vanilla lightning never targets modded rods).
+     *
+     * CRITICAL invariant: the game keeps AT MOST ONE pending scheduled tick
+     * per (block, position) — extra schedule() calls are SILENTLY dropped
+     * (LevelChunkTicks.ticksPerPosition dedups on position + block only).
+     * So after a strike we must NOT reschedule ourselves: the strike's own
+     * +8 un-power tick already owns the slot, and it carries the chain —
+     * the powered branch below is where the next link is always forged.
+     * (v0.5.0 got this wrong: its post-strike reschedule was dropped and the
+     * chain died after every strike, leaving only the randomTick backstop.)
+     *
+     * The powered branch runs exactly 8 ticks after every strike, which makes
+     * it the natural place to roll for a FLURRY: with luck the next bolt is
+     * scheduled ~1-2 s out instead of 8-20 s — and since every strike re-rolls,
+     * flurries chain into the occasional relentless barrage.
      */
     @Override
     protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         if (state.getValue(POWERED)) {
             super.tick(state, level, pos, random); // the un-power pulse ending
+            if (random.nextFloat() < FLURRY_CHANCE) {
+                level.scheduleTick(pos, this, FLURRY_DELAY_MIN + random.nextInt(FLURRY_DELAY_SPREAD));
+            } else {
+                scheduleNextCheck(level, pos, random);
+            }
             return;
         }
         if (level.isThundering() && level.canSeeSky(pos.above())) {
             summonStrike(state, level, pos);
+            return; // the strike's +8 un-power tick now owns the slot and carries the chain
         }
-        scheduleNextCheck(level, pos, random); // always keep the timer alive
+        scheduleNextCheck(level, pos, random); // quiet weather: just keep the timer alive
     }
 
     /** Backstop only: restarts a lost timer (pre-update rods, piston moves). */

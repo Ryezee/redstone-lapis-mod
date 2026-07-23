@@ -1,4 +1,4 @@
-﻿plugins {
+plugins {
     id 'java-library'
     // Single-project build, so the NeoGradle plugin is applied here with its version
     // (in the monorepo this version was declared once in the root build.gradle).
@@ -11,7 +11,7 @@ ext {
     mod_id = 'redstonelapismod'
     mod_name = 'Redstone & Lapis Mod'
     // '-snapshot' marks unreleased dev builds; drop the suffix when cutting the release.
-    mod_version = '0.6.0-snapshot'
+    mod_version = '0.5.1'
     mod_group_id = 'com.example.redstonelapismod'
 }
 
