@@ -23,10 +23,10 @@ import net.minecraft.world.item.enchantment.ItemEnchantments;
 /**
  * Lapis Paragon — the lapis family's legendary capstone. Loot-only, ultra
  * rare. Click it onto enchanted gear (or an enchanted book) in the
- * inventory: every enchantment sitting AT its vanilla maximum rises one
- * level beyond the cap (Sharpness V -> VI). Hard-capped at max+1 — an
- * ascended enchantment is no longer at its vanilla max, so a second Paragon
- * cannot lift it again. Consumed on use.
+ * inventory: every enchantment at (or already beyond) its vanilla maximum
+ * rises one more level (Sharpness V -> VI -> VII -> ...). No upper limit —
+ * rarity is the only brake (loot rolls one gem at a time). Below-max
+ * enchantments are untouched: max it the vanilla way first. Consumed on use.
  *
  * Gesture note: batteries/fuel use overrideOtherStackedOnMe on the RECEIVING
  * item, but swords are vanilla code — so the Paragon uses the mirror hook,
@@ -67,9 +67,10 @@ public class LapisParagonItem extends Item {
         int lifted = 0;
         for (Object2IntMap.Entry<Holder<Enchantment>> entry : current.entrySet()) {
             int level = entry.getIntValue();
-            // Exactly AT vanilla max -> one past it. Below max or already
-            // ascended (level > max): untouched — the self-limiting rule.
-            if (level == entry.getKey().value().getMaxLevel()) {
+            // At or beyond vanilla max -> one more. Below max: untouched
+            // (earn the vanilla cap first). No ceiling — user rule; the
+            // component codec tops out at 255, far past any sane grind.
+            if (level >= entry.getKey().value().getMaxLevel()) {
                 ascended.set(entry.getKey(), level + 1);
                 lifted++;
             }

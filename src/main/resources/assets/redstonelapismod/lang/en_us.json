@@ -40,7 +40,7 @@
   "tooltip.redstonelapismod.lapis_gadget.charge": "Lapis charge: %s / %s",
   "tooltip.redstonelapismod.lapis_gadget.feed_hint": "Right-click Concentrated Lapis Lazuli onto this item to fuel it",
   "tooltip.redstonelapismod.paragon.desc": "A flawless gem cut from impossible knowledge",
-  "tooltip.redstonelapismod.paragon.effect": "Raises every maxed enchantment one level beyond its limit",
+  "tooltip.redstonelapismod.paragon.effect": "Raises every maxed enchantment another level — no limit",
   "tooltip.redstonelapismod.paragon.hint": "Click onto enchanted gear or a book — consumed on use",
   "tooltip.redstonelapismod.concentrated_lapis.desc": "A dense shard of deep-earth lapis, humming with power",
   "tooltip.redstonelapismod.concentrated_lapis.fuel": "Fuels lapis gadgets (+%s charge)",
