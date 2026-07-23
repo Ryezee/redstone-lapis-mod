@@ -8,8 +8,12 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ClickAction;
 import net.minecraft.world.inventory.Slot;
@@ -19,6 +23,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
+
+import org.joml.Vector3f;
 
 /**
  * Lapis Paragon — the lapis family's legendary capstone. Loot-only, ultra
@@ -33,6 +39,10 @@ import net.minecraft.world.item.enchantment.ItemEnchantments;
  * overrideStackedOnOther: "I'm on the cursor and was clicked onto a slot."
  */
 public class LapisParagonItem extends Item {
+
+    /** Ascension nova: oversized lapis-blue dust. */
+    private static final DustParticleOptions NOVA_DUST =
+            new DustParticleOptions(new Vector3f(0.35F, 0.55F, 1.0F), 2.5F);
 
     public LapisParagonItem(Properties properties) {
         super(properties);
@@ -83,9 +93,40 @@ public class LapisParagonItem extends Item {
 
         target.set(componentType, ascended.toImmutable());
         paragon.shrink(1);
-        player.playSound(SoundEvents.ENCHANTMENT_TABLE_USE, 0.9F, 1.4F);
-        player.playSound(SoundEvents.PLAYER_LEVELUP, 0.7F, 1.6F);
+        playAscensionBurst(player);
         return true;
+    }
+
+    /**
+     * The ascension ritual: a magical explosion centered on the player.
+     * Server-side only — the hook runs on BOTH sides of the inventory click,
+     * and effects must come from the authoritative side so every nearby
+     * player sees and hears them (sendParticles + playSound(null, ...) both
+     * broadcast). The user sees it too: the world renders behind the
+     * inventory screen.
+     */
+    private static void playAscensionBurst(Player player) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        double x = player.getX();
+        double y = player.getY() + 1.2; // chest height — the ritual wraps the player
+        double z = player.getZ();
+
+        // Enchantment glyphs ("enchant orbs") swarming outward...
+        serverLevel.sendParticles(ParticleTypes.ENCHANT, x, y + 0.4, z, 120, 0.7, 0.9, 0.7, 1.0);
+        // ...white end-rod streaks rising through them...
+        serverLevel.sendParticles(ParticleTypes.END_ROD, x, y, z, 40, 0.6, 0.8, 0.6, 0.1);
+        // ...inside a lapis-blue nova.
+        serverLevel.sendParticles(NOVA_DUST, x, y, z, 60, 1.2, 1.2, 1.2, 0.0);
+
+        // Majestic chord: table whoosh + level-up fanfare + amethyst shimmer tail.
+        serverLevel.playSound(null, x, y, z, SoundEvents.ENCHANTMENT_TABLE_USE,
+                SoundSource.PLAYERS, 1.0F, 1.2F);
+        serverLevel.playSound(null, x, y, z, SoundEvents.PLAYER_LEVELUP,
+                SoundSource.PLAYERS, 0.9F, 1.5F);
+        serverLevel.playSound(null, x, y, z, SoundEvents.AMETHYST_BLOCK_RESONATE,
+                SoundSource.PLAYERS, 1.0F, 1.0F);
     }
 
     @Override
