@@ -169,6 +169,10 @@ public class RedstoneLapisMod {
     public static final DeferredItem<Item> CONCENTRATED_LAPIS_LAZULI = ITEMS.register("concentrated_lapis_lazuli",
             () -> new ConcentratedLapisItem(new Item.Properties().stacksTo(16).rarity(Rarity.RARE)));
 
+    // Lapis Paragon — legendary loot-only gem: lifts maxed enchantments past their cap.
+    public static final DeferredItem<Item> LAPIS_PARAGON = ITEMS.register("lapis_paragon",
+            () -> new LapisParagonItem(new Item.Properties().stacksTo(4).rarity(Rarity.EPIC)));
+
     // Lapis Echo Lens — handheld sonar: pulse reveals nearby creatures through walls.
     public static final DeferredItem<Item> LAPIS_ECHO_LENS = ITEMS.register("lapis_echo_lens",
             () -> new EchoLensItem(new Item.Properties().stacksTo(1)));
@@ -215,6 +219,7 @@ public class RedstoneLapisMod {
             event.accept(LAPIS_ECHO_LENS);                                   // empty tank
             event.accept(LapisGadgetItem.fullyFueled(LAPIS_ECHO_LENS.get())); // full tank, for testing
             event.accept(CONCENTRATED_LAPIS_LAZULI);
+            event.accept(LAPIS_PARAGON);
         }
         if (event.getTabKey() == CreativeModeTabs.COMBAT) {
             event.accept(REDSTONE_ROCKET_LAUNCHER);

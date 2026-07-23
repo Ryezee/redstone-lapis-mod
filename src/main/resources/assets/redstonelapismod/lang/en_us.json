@@ -14,6 +14,7 @@
   "item.redstonelapismod.lapis_powered_gem": "Lapis Powered Gem",
   "item.redstonelapismod.concentrated_lapis_lazuli": "Concentrated Lapis Lazuli",
   "item.redstonelapismod.lapis_echo_lens": "Lapis Echo Lens",
+  "item.redstonelapismod.lapis_paragon": "Lapis Paragon",
 
   "tooltip.redstonelapismod.redstone_goggles.vision": "Grants night vision while worn",
   "tooltip.redstonelapismod.redstone_goggles.scan": "Nearby ores shimmer with redstone motes",
@@ -38,6 +39,9 @@
   "tooltip.redstonelapismod.echo_lens.cost": "Costs %s lapis charge — range %s blocks",
   "tooltip.redstonelapismod.lapis_gadget.charge": "Lapis charge: %s / %s",
   "tooltip.redstonelapismod.lapis_gadget.feed_hint": "Right-click Concentrated Lapis Lazuli onto this item to fuel it",
+  "tooltip.redstonelapismod.paragon.desc": "A flawless gem cut from impossible knowledge",
+  "tooltip.redstonelapismod.paragon.effect": "Raises every maxed enchantment one level beyond its limit",
+  "tooltip.redstonelapismod.paragon.hint": "Click onto enchanted gear or a book — consumed on use",
   "tooltip.redstonelapismod.concentrated_lapis.desc": "A dense shard of deep-earth lapis, humming with power",
   "tooltip.redstonelapismod.concentrated_lapis.fuel": "Fuels lapis gadgets (+%s charge)",
   "message.redstonelapismod.battery.no_redstone": "No redstone dust to charge with",

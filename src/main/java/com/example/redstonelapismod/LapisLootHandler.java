@@ -34,17 +34,34 @@ public final class LapisLootHandler {
             BuiltInLootTables.STRONGHOLD_CROSSING,
             BuiltInLootTables.ANCIENT_CITY);
 
+    /** Chance per chest of a Lapis Paragon — the legendary find. */
+    private static final float PARAGON_CHANCE = 0.05F;
+
+    /** Only the rarest, knowledge-flavored hoards can hold a Paragon. */
+    private static final Set<ResourceKey<LootTable>> PARAGON_TABLES = Set.of(
+            BuiltInLootTables.ANCIENT_CITY,
+            BuiltInLootTables.STRONGHOLD_LIBRARY,
+            BuiltInLootTables.END_CITY_TREASURE,
+            BuiltInLootTables.WOODLAND_MANSION);
+
     private LapisLootHandler() {}
 
     public static void onLootTableLoad(LootTableLoadEvent event) {
-        if (!TARGET_TABLES.contains(event.getKey())) {
-            return;
+        if (TARGET_TABLES.contains(event.getKey())) {
+            event.getTable().addPool(LootPool.lootPool()
+                    .name(RedstoneLapisMod.MODID + ":concentrated_lapis")
+                    .setRolls(ConstantValue.exactly(1))
+                    .when(LootItemRandomChanceCondition.randomChance(DROP_CHANCE))
+                    .add(LootItem.lootTableItem(RedstoneLapisMod.CONCENTRATED_LAPIS_LAZULI.get()))
+                    .build());
         }
-        event.getTable().addPool(LootPool.lootPool()
-                .name(RedstoneLapisMod.MODID + ":concentrated_lapis")
-                .setRolls(ConstantValue.exactly(1))
-                .when(LootItemRandomChanceCondition.randomChance(DROP_CHANCE))
-                .add(LootItem.lootTableItem(RedstoneLapisMod.CONCENTRATED_LAPIS_LAZULI.get()))
-                .build());
+        if (PARAGON_TABLES.contains(event.getKey())) {
+            event.getTable().addPool(LootPool.lootPool()
+                    .name(RedstoneLapisMod.MODID + ":lapis_paragon")
+                    .setRolls(ConstantValue.exactly(1))
+                    .when(LootItemRandomChanceCondition.randomChance(PARAGON_CHANCE))
+                    .add(LootItem.lootTableItem(RedstoneLapisMod.LAPIS_PARAGON.get()))
+                    .build());
+        }
     }
 }
