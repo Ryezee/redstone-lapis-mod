@@ -21,12 +21,17 @@ import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.Rarity;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.MapColor;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -40,6 +45,22 @@ public class RedstoneLapisMod {
 
     // Deferred register for this mod's items.
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
+
+    // Deferred register for this mod's blocks — first customer: the lapis lightning rod.
+    public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);
+
+    // Lapis Lightning Rod — copper-rod behavior, but it summons its own strikes
+    // in storms and pays out XP. randomTicks() drives the storm logic.
+    public static final DeferredBlock<LapisLightningRodBlock> LAPIS_LIGHTNING_ROD =
+            BLOCKS.register("lapis_lightning_rod", () -> new LapisLightningRodBlock(
+                    BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.LAPIS)
+                            .forceSolidOn()
+                            .requiresCorrectToolForDrops()
+                            .strength(3.0F, 6.0F)
+                            .sound(SoundType.COPPER)
+                            .noOcclusion()
+                            .randomTicks()));
 
     // Deferred register for this mod's data component types (typed per-ItemStack data, 1.20.5+).
     public static final DeferredRegister.DataComponents DATA_COMPONENTS =
@@ -169,6 +190,14 @@ public class RedstoneLapisMod {
     public static final DeferredItem<Item> CONCENTRATED_LAPIS_LAZULI = ITEMS.register("concentrated_lapis_lazuli",
             () -> new ConcentratedLapisItem(new Item.Properties().stacksTo(16).rarity(Rarity.RARE)));
 
+    // Lapis Lazuli Ingot — smelt a lapis block; the lapis family's crafting metal.
+    public static final DeferredItem<Item> LAPIS_LAZULI_INGOT = ITEMS.register("lapis_lazuli_ingot",
+            () -> new Item(new Item.Properties()));
+
+    // The rod's item form (what sits in inventory and gets placed).
+    public static final DeferredItem<Item> LAPIS_LIGHTNING_ROD_ITEM = ITEMS.register("lapis_lightning_rod",
+            () -> new BlockItem(LAPIS_LIGHTNING_ROD.get(), new Item.Properties()));
+
     // Lapis Paragon — legendary loot-only gem: lifts maxed enchantments past their cap.
     public static final DeferredItem<Item> LAPIS_PARAGON = ITEMS.register("lapis_paragon",
             () -> new LapisParagonItem(new Item.Properties().stacksTo(4).rarity(Rarity.EPIC)));
@@ -180,6 +209,7 @@ public class RedstoneLapisMod {
     public RedstoneLapisMod(IEventBus modEventBus, ModContainer modContainer) {
         // Register the deferred registers to the mod event bus.
         ITEMS.register(modEventBus);
+        BLOCKS.register(modEventBus);
         DATA_COMPONENTS.register(modEventBus);
         ARMOR_MATERIALS.register(modEventBus);
         ENTITY_TYPES.register(modEventBus);
@@ -233,6 +263,10 @@ public class RedstoneLapisMod {
             event.accept(REDSTONE_POWERED_GEM);
             event.accept(REDSTONE_NUCLEAR_WARHEAD);
             event.accept(LAPIS_POWERED_GEM);
+            event.accept(LAPIS_LAZULI_INGOT);
+        }
+        if (event.getTabKey() == CreativeModeTabs.REDSTONE_BLOCKS) {
+            event.accept(LAPIS_LIGHTNING_ROD_ITEM);
         }
     }
 }

@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/lightning_rod",
+  "textures": {
+    "texture": "redstonelapismod:block/lapis_lightning_rod_on",
+    "particle": "redstonelapismod:block/lapis_lightning_rod_on"
+  }
+}
